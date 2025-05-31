@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mutual Inductance Calculator for Circular Coils</title>
+  <!-- MathJax for rendering formulas -->
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <!-- Chart.js for plotting -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3"></script>
+  <!-- Three.js & OrbitControls for 3D visualization -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f7f9fa;
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background: #2c3e50;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 2rem auto;
+      background: white;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .section {
+      margin-bottom: 2rem;
+    }
+    .section h2 {
+      margin-top: 0;
+      border-bottom: 2px solid #ccc;
+      padding-bottom: 0.5rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    .grid .field {
+      margin-bottom: 1rem;
+    }
+    label {
+      display: block;
+      margin-bottom: 0.25rem;
+      font-weight: bold;
+    }
+    input[type="number"],
+    input[type="text"],
+    select {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .radio-group {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    .radio-group label {
+      font-weight: normal;
+      margin-right: 0.5rem;
+    }
+    button {
+      margin-top: 1rem;
+      padding: 0.75rem 1.5rem;
+      background: #1abc9c;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    button:hover {
+      background: #159a82;
+    }
+    .result {
+      margin-top: 1rem;
+      padding: 1rem;
+      background: #ecf0f1;
+      border-radius: 4px;
+      font-size: 1.1rem;
+    }
+    .chart-container {
+      margin-top: 2rem;
+    }
+    canvas {
+      width: 100% !important;
+      height: 400px !important;
+    }
+    .formulas {
+      margin-top: 2rem;
+      padding: 1rem;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .formulas h2 {
+      margin-top: 0;
+    }
+    .references {
+      margin-top: 0.5rem;
+      font-style: italic;
+      font-size: 0.9rem;
+    }
+    #coilVis {
+      width: 100%;
+      height: 400px;
+      background: #e0e0e0;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    #saveDataBtn {
+      background: #2980b9;
+      margin-left: 1rem;
+    }
+    #saveDataBtn:hover {
+      background: #1b5f86;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Mutual Inductance Calculator for Circular Coils</h1>
+  </header>
+  <div class="container">
+    <!-- Section: Coil Parameters Input -->
+    <div class="section">
+      <h2>Coil Parameters</h2>
+      <div class="grid">
+        <!-- Transmitter Coil (Primary) Inputs -->
+        <div>
+          <h3>Transmitter Coil (Primary)</h3>
+          <div class="radio-group">
+            <label><input type="radio" name="txShape" value="spiral" checked /> Spiral</label>
+            <label><input type="radio" name="txShape" value="helical" /> Helical</label>
+          </div>
+          <div class="field">
+            <label for="rmaxTx">Max Radius (cm)</label>
+            <input type="number" id="rmaxTx" value="5" step="0.1" />
+          </div>
+          <div class="field">
+            <label for="pTx">Pitch p<sub>tx</sub> (mm)</label>
+            <input type="text" id="pTx" value="5" />
+          </div>
+          <div class="field">
+            <label for="nTx">Turns N<sub>tx</sub></label>
+            <input type="number" id="nTx" value="10" />
+          </div>
+        </div>
+        <!-- Receiver Coil (Secondary) Inputs -->
+        <div>
+          <h3>Receiver Coil (Secondary)</h3>
+          <div class="radio-group">
+            <label><input type="radio" name="rxShape" value="spiral" checked /> Spiral</label>
+            <label><input type="radio" name="rxShape" value="helical" /> Helical</label>
+          </div>
+          <div class="field">
+            <label for="rmaxRx">Max Radius (cm)</label>
+            <input type="number" id="rmaxRx" value="5" step="0.1" />
+          </div>
+          <div class="field">
+            <label for="pRx">Pitch p<sub>rx</sub> (mm)</label>
+            <input type="text" id="pRx" value="5" />
+          </div>
+          <div class="field">
+            <label for="nRx">Turns N<sub>rx</sub></label>
+            <input type="number" id="nRx" value="10" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section: Position & Orientation Inputs -->
+    <div class="section">
+      <h2>Position & Orientation</h2>
+      <div class="grid">
+        <div class="field">
+          <label for="xOffset">Offset x (cm)</label>
+          <input type="number" id="xOffset" value="0" step="0.1" />
+        </div>
+        <div class="field">
+          <label for="yOffset">Offset y (cm)</label>
+          <input type="number" id="yOffset" value="0" step="0.1" />
+        </div>
+        <div class="field">
+          <label for="zOffset">Offset z (cm)</label>
+          <input type="number" id="zOffset" value="0" step="0.1" />
+        </div>
+        <div class="field">
+          <label for="phi">Rotation φ (deg)</label>
+          <input type="number" id="phi" value="0" step="1" />
+        </div>
+        <div class="field">
+          <label for="theta">Tilt θ (deg)</label>
+          <input type="number" id="theta" value="0" step="1" />
+        </div>
+      </div>
+      <button id="calculateBtn">Calculate Mutual Inductance</button>
+      <div id="result" class="result"></div>
+    </div>
+
+    <!-- Section: Coil Visualization -->
+    <div class="section">
+      <h2>Coil Visualization (Tx in XY Plane, Rx Tilted)</h2>
+      <div id="coilVis"></div>
+    </div>
+
+    <!-- Section: Graph Controls -->
+    <div class="section">
+      <h2>Sweep & Graph</h2>
+      <div class="grid">
+        <div>
+          <label for="sweepVar">Sweep Variable</label>
+          <select id="sweepVar">
+            <option value="x">x (cm)</option>
+            <option value="y">y (cm)</option>
+            <option value="z">z (cm)</option>
+            <option value="phi">φ (deg)</option>
+            <option value="theta">θ (deg)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="sweepMin">Min</label>
+          <input type="number" id="sweepMin" value="0" step="0.1" />
+        </div>
+        <div class="field">
+          <label for="sweepMax">Max</label>
+          <input type="number" id="sweepMax" value="10" step="0.1" />
+        </div>
+        <div class="field">
+          <label for="sweepStep">Step</label>
+          <input type="number" id="sweepStep" value="1" step="0.1" />
+        </div>
+      </div>
+      <button id="plotBtn">Plot Sweep Graph</button>
+      <button id="saveDataBtn">Save Sweep Data</button>
+      <div class="chart-container">
+        <canvas id="sweepChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Section: Formulas & References -->
+    <div class="formulas">
+      <h2>Formulas Used</h2>
+      <div class="references">
+        References:  
+        1. S. Babic, F. Sirois, C. Akyel, C. Girardi, “Mutual Inductance Calculation Between Two Circular Loops Using 24-Point Gauss Quadrature,” <em>IEEE Trans. Magn.</em>, 2010.  
+        2. M. Kacenak, “Romberg Integration Algorithm,” Technical University of Kosice, 2001.
+      </div>
+
+      <h3>Normalized Parameters</h3>
+      \[
+      \alpha = \frac{R_s}{R_p}, 
+      \quad 
+      \beta = \frac{x_c}{R_p}, 
+      \quad 
+      \gamma = \frac{y_c}{R_p}, 
+      \quad 
+      \delta = \frac{z_c}{R_p}.
+      \]
+
+      <h3>Law of Cosines in Integrand</h3>
+      \[
+      A = 1 + e^2 + g^2 + h^2 + d^2 
+      + 2\,h\bigl(p_4 \cos p + p_5 \sin p\bigr),
+      \]
+      where 
+      \[
+      e = \beta,\quad 
+      g = \gamma,\quad 
+      h = \alpha,\quad 
+      d = \delta.
+      \]
+
+      <h3>Auxiliary Quantities</h3>
+      \[
+      l = \sqrt{a^2 + c^2}, 
+      \quad 
+      L = \sqrt{l^2 + b^2}, 
+      \]
+      \[
+      V = \sqrt{
+        (e^2 + g^2) 
+        + h^2\Bigl((1 - \tfrac{b^2 c^2}{l^2 L^2})\cos^2 p 
+        + \tfrac{c^2}{l^2}\sin^2 p 
+        + \tfrac{a b c}{l^2 L}\sin(2p)\Bigr) 
+        - 2\,\tfrac{h}{lL}(e a b - g l^2)\cos p 
+        - 2\,\tfrac{h e c}{l}\sin p 
+      }.
+      \]
+
+      <h3>Modulus for Elliptic Integrals</h3>
+      \[
+      m = \frac{4\,V}{\,A + 2\,V\,}, 
+      \quad 
+      k = \sqrt{m}.
+      \]
+      
+      <h3>Complete Elliptic Integrals</h3>
+      \[
+      K(m) = \int_0^{\frac{\pi}{2}} \frac{1}{\sqrt{1 - m \sin^2 \phi}}\;d\phi, 
+      \quad 
+      E(m) = \int_0^{\frac{\pi}{2}} \sqrt{1 - m \sin^2 \phi}\;d\phi.
+      \]
+
+      <h3>ψ-Function</h3>
+      \[
+      \Psi(m) = (2 - m)\,K(m) \;-\; 2\,E(m).
+      \]
+
+      <h3>Integrand f(p)</h3>
+      \[
+      f(p) = \bigl(p_1 \cos p + p_2 \sin p + p_3\bigr)\;
+      \frac{\Psi(m)}{\,k\,V^{1.5}\,},
+      \]
+      where 
+      \[
+      \begin{aligned}
+      p_1 &= \frac{g\,c}{l}, 
+      &\quad
+      p_2 &= -\frac{e\,l^2 + g\,a\,b}{l\,L}, 
+      &\quad
+      p_3 &= \frac{h\,c}{L}, \\[6pt]
+      p_4 &= \frac{g\,l^2 - e\,a\,b - d\,b\,c}{L}, 
+      &\quad
+      p_5 &= \frac{d\,a - e\,c}{l}.
+      \end{aligned}
+      \]
+
+      <h3>Romberg Integration (1D)</h3>
+      \[
+      \begin{aligned}
+      &\text{Let } \Delta = 2\pi,\quad 
+      \text{nodes } 0,\,\tfrac{2\pi}{2^{N-1}},\,2\tfrac{2\pi}{2^{N-1}},\,\dots,\,2\pi, 
+      \\[4pt]
+      &T_1 = \Delta\,\frac{f_0 + f_{2^{N-1}}}{2}, 
+      \qquad
+      T_{i} = \frac{T_{i-1} + \Delta\,\sum (\text{new midpoints})\,f}{2}, 
+      \\[4pt]
+      &R_{i,k} = \frac{4^k\,R_{i,k-1} \;-\; R_{i-1,k-1}}{4^k - 1}, 
+      \quad k=1,\ldots,i-1, 
+      \\[4pt]
+      &\text{Final: } \int_0^{2\pi} f(p)\,dp \approx R_{N,N-1}.
+      \end{aligned}
+      \]
+
+      <h3>Mutual Inductance</h3>
+      \[
+      M 
+      = \mu_0\,R_s \times (\text{Romberg integral}) 
+      = 4\times 10^{-7}\,R_s \times (\text{Romberg result}),
+      \]
+      with \(\mu_0 = 4\pi \times 10^{-7}\,\mathrm{H/m}.\)
+    </div>
+  </div>
+
+  <script>
+    // ------------------------------ //
+    // JavaScript Implementation      //
+    // ------------------------------ //
+
+    // Elliptic integrals via AGM algorithm
+    function ellipke(m) {
+      let a = 1.0;
+      let b = Math.sqrt(1 - m);
+      let sumE = 1 - m / 2;
+      let iter = 0;
+      while (Math.abs(a - b) > 1e-12 && iter < 50) {
+        let an = (a + b) / 2.0;
+        let bn = Math.sqrt(a * b);
+        let cn = (a - b) / 2.0;
+        sumE -= Math.pow(2, iter) * cn * cn;
+        a = an; b = bn;
+        iter++;
+      }
+      let K = Math.PI / (2 * a);
+      let E = K * sumE;
+      return [K, E];
+    }
+
+    // f24 integrand evaluation over array of p
+    function f24Array(pArr, alpha, beta, gamma, delta, a, b, c) {
+      const results = new Array(pArr.length);
+      const h = alpha, e = beta, g = gamma, d = delta;
+      const a2 = a * a, b2 = b * b, c2 = c * c;
+      const l2 = a2 + c2, l = Math.sqrt(l2);
+      const L2 = l2 + b2, L = Math.sqrt(L2);
+      const l2L2 = l2 * L2, lL = l * L;
+
+      for (let idx = 0; idx < pArr.length; idx++) {
+        const p = pArr[idx];
+        const sp = Math.sin(p), cp = Math.cos(p);
+        let V, p1, p2, p3, p4, p5;
+
+        if (l === 0) {
+          p1 = 0;
+          p2 = -g * Math.sign(b);
+          p3 = 0;
+          p4 = -e * Math.sign(b);
+          p5 = d;
+          V = Math.sqrt(e*e + g*g + h*h*cp*cp - 2*h*e*Math.sign(b)*cp);
+        } else {
+          p1 = (g * c) / l;
+          p2 = - (e * l2 + g * a * b) / (l * L);
+          p3 = (h * c) / L;
+          p4 = (g * l2 - e * a * b - d * b * c) / L;
+          p5 = (d * a - e * c) / l;
+          const term1 = e*e + g*g;
+          const term2 = h*h * (
+            (1 - (b2 * c2) / (l2L2)) * cp*cp
+            + (c2 / l2) * sp*sp
+            + (a * b * c) / (l2 * L) * Math.sin(2*p)
+          );
+          const term3 = - (2 * h / (lL)) * (e * a * b - g * l2) * cp;
+          const term4 = - (2 * h * e * c / l) * sp;
+          V = Math.sqrt(term1 + term2 + term3 + term4);
+        }
+
+        const A = (1 + e*e + g*g + h*h + d*d) + 2*h*(p4 * cp + p5 * sp);
+        const m = 4 * V / (A + 2 * V);
+        const k = Math.sqrt(m);
+        const [Kval, Eval] = ellipke(m);
+        const PSI = (2 - m) * Kval - 2 * Eval;
+        results[idx] = (p1 * cp + p2 * sp + p3) * (PSI / (k * Math.pow(V, 1.5)));
+      }
+      return results;
+    }
+
+    // Babic_24 mutual inductance calculation
+    function Babic_24(Rp, Rs, pc, n, tol = 1e-13) {
+      const xc = pc[0] / Rp, yc = pc[1] / Rp, zc = pc[2] / Rp;
+      const a = n[0], b = n[1], c = n[2];
+      const alpha = Rs / Rp, beta = xc, gamma = yc, delta = zc;
+
+      const decdigs = Math.abs(Math.floor(Math.log10(tol)));
+      const nPts = Math.pow(2, decdigs - 1) + 1;
+      const pArr = new Array(nPts);
+      for (let i = 0; i < nPts; i++) {
+        pArr[i] = (2 * Math.PI) * i / (nPts - 1);
+      }
+      const romall = f24Array(pArr, alpha, beta, gamma, delta, a, b, c);
+
+      let romPrev = new Array(decdigs).fill(0);
+      let romCurr = new Array(decdigs).fill(0);
+
+      let h = 2 * Math.PI;
+      romPrev[0] = h * (romall[0] + romall[nPts - 1]) / 2;
+
+      for (let i = 2; i <= decdigs; i++) {
+        const step = Math.pow(2, decdigs - i + 1);
+        let sumNew = 0;
+        for (let j = step / 2; j < nPts - 1; j += step) {
+          sumNew += romall[j];
+        }
+        romCurr[0] = (romPrev[0] + h * sumNew) / 2;
+        for (let k = 1; k < i; k++) {
+          const factor = Math.pow(4, k);
+          romCurr[k] = (factor * romCurr[k - 1] - romPrev[k - 1]) / (factor - 1);
+        }
+        for (let k = 0; k < i; k++) {
+          romPrev[k] = romCurr[k];
+        }
+        h /= 2;
+      }
+
+      const integralVal = romPrev[decdigs - 1];
+      const mu0 = 4 * Math.PI * 1e-7;
+      return mu0 * Rs * integralVal;
+    }
+
+    // Helper to read selected radio value
+    function getRadioValue(name) {
+      const radios = document.getElementsByName(name);
+      for (const r of radios) {
+        if (r.checked) return r.value;
+      }
+      return null;
+    }
+
+    // Three.js vars
+    let scene, camera, renderer, controls, coilGroup;
+    let primaryCoilMesh = null;
+    let secondaryCoilMesh = null;
+
+    // Initialize Three.js scene
+    function initThree() {
+      const container = document.getElementById('coilVis');
+
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0xf7f9fa);
+      // Set scene “up” to Z axis
+      scene.up.set(0, 0, 1);
+
+      camera = new THREE.PerspectiveCamera(
+        60,
+        container.clientWidth / container.clientHeight,
+        0.1,
+        1000
+      );
+      // Set camera up to Z axis
+      camera.up.set(0, 0, 1);
+      camera.position.set(15, 15, 15);
+      camera.lookAt(0, 0, 0);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(container.clientWidth, container.clientHeight);
+      container.appendChild(renderer.domElement);
+
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.1;
+      controls.screenSpacePanning = false;
+      controls.minDistance = 2;
+      controls.maxDistance = 200;
+
+      const ambientLight = new THREE.AmbientLight(0xaaaaaa, 0.6);
+      scene.add(ambientLight);
+      const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
+      dirLight.position.set(20, 20, 20);
+      scene.add(dirLight);
+
+      // Draw custom axes (length 5)
+      const axisLength = 5;
+      const arrowThickness = 0.2;
+
+      // X-axis (red)
+      const arrowX = new THREE.ArrowHelper(
+        new THREE.Vector3(1, 0, 0),
+        new THREE.Vector3(0, 0, 0),
+        axisLength,
+        0xff0000,
+        arrowThickness,
+        arrowThickness * 0.5
+      );
+      scene.add(arrowX);
+
+      // Y-axis (green)
+      const arrowY = new THREE.ArrowHelper(
+        new THREE.Vector3(0, 1, 0),
+        new THREE.Vector3(0, 0, 0),
+        axisLength,
+        0x00ff00,
+        arrowThickness,
+        arrowThickness * 0.5
+      );
+      scene.add(arrowY);
+
+      // Z-axis (blue)
+      const arrowZ = new THREE.ArrowHelper(
+        new THREE.Vector3(0, 0, 1),
+        new THREE.Vector3(0, 0, 0),
+        axisLength,
+        0x0000ff,
+        arrowThickness,
+        arrowThickness * 0.5
+      );
+      scene.add(arrowZ);
+
+      addAxisLabels(axisLength);
+
+      coilGroup = new THREE.Group();
+      scene.add(coilGroup);
+
+      window.addEventListener('resize', onWindowResize);
+      animateThree();
+    }
+
+    // Add X, Y, Z labels at ends of axes
+    function addAxisLabels(length) {
+      function makeTextSprite(text, colorHex) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 128;
+        canvas.height = 128;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = colorHex;
+        ctx.font = 'Bold 64px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, 64, 64);
+        const texture = new THREE.CanvasTexture(canvas);
+        const material = new THREE.SpriteMaterial({ map: texture, depthTest: false });
+        const sprite = new THREE.Sprite(material);
+        sprite.scale.set(1.5, 1.5, 1.5);
+        return sprite;
+      }
+
+      // X label at (length+1, 0, 0)
+      const xLabel = makeTextSprite('X', '#ff0000');
+      xLabel.position.set(length + 1, 0, 0);
+      scene.add(xLabel);
+
+      // Y label at (0, length+1, 0)
+      const yLabel = makeTextSprite('Y', '#00ff00');
+      yLabel.position.set(0, length + 1, 0);
+      scene.add(yLabel);
+
+      // Z label at (0, 0, length+1)
+      const zLabel = makeTextSprite('Z', '#0000ff');
+      zLabel.position.set(0, 0, length + 1);
+      scene.add(zLabel);
+    }
+
+    function onWindowResize() {
+      const container = document.getElementById('coilVis');
+      camera.aspect = container.clientWidth / container.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(container.clientWidth, container.clientHeight);
+    }
+
+    function animateThree() {
+      requestAnimationFrame(animateThree);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    // Update coil meshes based on input (cm units)
+    function updateCoilVisuals() {
+      if (primaryCoilMesh) {
+        coilGroup.remove(primaryCoilMesh);
+        primaryCoilMesh.geometry.dispose();
+        primaryCoilMesh.material.dispose();
+        primaryCoilMesh = null;
+      }
+      if (secondaryCoilMesh) {
+        coilGroup.remove(secondaryCoilMesh);
+        secondaryCoilMesh.geometry.dispose();
+        secondaryCoilMesh.material.dispose();
+        secondaryCoilMesh = null;
+      }
+
+      // Read inputs (cm)
+      const r_max_tx_cm = parseFloat(document.getElementById('rmaxTx').value);
+      const r_max_rx_cm = parseFloat(document.getElementById('rmaxRx').value);
+      const x_off_cm = parseFloat(document.getElementById('xOffset').value);
+      const y_off_cm = parseFloat(document.getElementById('yOffset').value);
+      const z_off_cm = parseFloat(document.getElementById('zOffset').value);
+      const phiDeg = parseFloat(document.getElementById('phi').value);
+      const thetaDeg = parseFloat(document.getElementById('theta').value);
+
+      const phiRad = THREE.MathUtils.degToRad(phiDeg);
+      const thetaRad = THREE.MathUtils.degToRad(thetaDeg);
+
+      // Tube thickness = 0.1 cm
+      const tubeRadius = 0.1;
+
+      // Primary coil: torus in XY plane (normal along Z), no extra rotation
+      const primaryGeom = new THREE.TorusGeometry(r_max_tx_cm, tubeRadius, 16, 128);
+      const primaryMat = new THREE.MeshPhongMaterial({
+        color: 0x0077ff,
+        shininess: 80
+      });
+      primaryCoilMesh = new THREE.Mesh(primaryGeom, primaryMat);
+      primaryCoilMesh.position.set(0, 0, 0);
+      coilGroup.add(primaryCoilMesh);
+
+      // Secondary coil: torus, rotate its normal to [sinθ cosφ, sinθ sinφ, cosθ]
+      const secondaryGeom = new THREE.TorusGeometry(r_max_rx_cm, tubeRadius, 16, 128);
+      const secondaryMat = new THREE.MeshPhongMaterial({
+        color: 0xff3333,
+        shininess: 80,
+        opacity: 0.8,
+        transparent: true
+      });
+      secondaryCoilMesh = new THREE.Mesh(secondaryGeom, secondaryMat);
+
+      // Compute desired normal vector n = (sinθ cosφ, sinθ sinφ, cosθ)
+      const nx = Math.sin(thetaRad) * Math.cos(phiRad);
+      const ny = Math.sin(thetaRad) * Math.sin(phiRad);
+      const nz = Math.cos(thetaRad);
+      const nVec = new THREE.Vector3(nx, ny, nz).normalize();
+
+      // Create quaternion to rotate default normal [0,0,1] → nVec
+      const quat = new THREE.Quaternion();
+      quat.setFromUnitVectors(new THREE.Vector3(0, 0, 1), nVec);
+      secondaryCoilMesh.setRotationFromQuaternion(quat);
+
+      // Apply offset (cm)
+      secondaryCoilMesh.position.set(x_off_cm, y_off_cm, z_off_cm);
+
+      coilGroup.add(secondaryCoilMesh);
+    }
+
+    // Storage for sweep data
+    let sweepLabels = [];
+    let sweepValues = [];
+
+    // Main mutual inductance calculation
+    function calculateMutualInductance() {
+      const txShape = getRadioValue('txShape');
+      const rxShape = getRadioValue('rxShape');
+      const r_max_tx = parseFloat(document.getElementById('rmaxTx').value) * 1e-2; // cm→m
+      const r_max_rx = parseFloat(document.getElementById('rmaxRx').value) * 1e-2; // cm→m
+      const p_tx_array = document.getElementById('pTx').value.split(',').map(x => parseFloat(x.trim()) * 1e-3);
+      const p_rx_array = document.getElementById('pRx').value.split(',').map(x => parseFloat(x.trim()) * 1e-3);
+      const N_tx = parseInt(document.getElementById('nTx').value);
+      const N_rx = parseInt(document.getElementById('nRx').value);
+
+      let x_off = parseFloat(document.getElementById('xOffset').value) * 1e-2;
+      let y_off = parseFloat(document.getElementById('yOffset').value) * 1e-2;
+      let z_off = parseFloat(document.getElementById('zOffset').value) * 1e-2;
+
+      let phi = parseFloat(document.getElementById('phi').value) * Math.PI / 180;
+      let theta = parseFloat(document.getElementById('theta').value) * Math.PI / 180;
+
+      const a = Math.sin(phi) * Math.sin(theta);
+      const b = -Math.cos(phi) * Math.sin(theta);
+      const c = Math.cos(theta);
+
+      // Build Rp, z_tx
+      let Rp = new Array(N_tx);
+      let z_tx = new Array(N_tx);
+      for (let i = 0; i < N_tx; i++) {
+        const pitch_tx = (i < p_tx_array.length ? p_tx_array[i] : p_tx_array[p_tx_array.length - 1]);
+        Rp[i] = r_max_tx - i * pitch_tx;
+        z_tx[i] = 0;
+      }
+
+      // Build Rs, z_rx
+      let Rs = new Array(N_rx);
+      let z_rx = new Array(N_rx);
+      for (let j = 0; j < N_rx; j++) {
+        const pitch_rx = (j < p_rx_array.length ? p_rx_array[j] : p_rx_array[p_rx_array.length - 1]);
+        Rs[j] = r_max_rx - j * pitch_rx;
+        z_rx[j] = z_off;
+      }
+
+      // Sum M_ij
+      let Msum = 0;
+      for (let i = 0; i < N_tx; i++) {
+        for (let j = 0; j < N_rx; j++) {
+          let zc = z_rx[j] - z_tx[i];
+          let Mij = Babic_24(Rp[i], Rs[j], [x_off, y_off, zc], [a, b, c]);
+          if (!isFinite(Mij) || isNaN(Mij)) {
+            // small adjustment +0.00001 mm = 1e-8 m
+            zc += 1e-8;
+            Mij = Babic_24(Rp[i], Rs[j], [x_off, y_off, zc], [a, b, c]);
+            if (!isFinite(Mij) || isNaN(Mij)) {
+              Mij = 0;
+            }
+          }
+          Msum += Mij;
+        }
+      }
+
+      const M_uH = Msum * 1e6;
+      document.getElementById('result').innerHTML =
+        `<p><strong>Mutual Inductance M:</strong> ${M_uH.toFixed(6)} μH</p>`;
+
+      updateCoilVisuals();
+    }
+
+    // Plot sweep graph
+    function plotSweepGraph() {
+      const txShape = getRadioValue('txShape');
+      const rxShape = getRadioValue('rxShape');
+      const r_max_tx = parseFloat(document.getElementById('rmaxTx').value) * 1e-2;
+      const r_max_rx = parseFloat(document.getElementById('rmaxRx').value) * 1e-2;
+      const p_tx_array = document.getElementById('pTx').value.split(',').map(x => parseFloat(x.trim()) * 1e-3);
+      const p_rx_array = document.getElementById('pRx').value.split(',').map(x => parseFloat(x.trim()) * 1e-3);
+      const N_tx = parseInt(document.getElementById('nTx').value);
+      const N_rx = parseInt(document.getElementById('nRx').value);
+
+      let x_off = parseFloat(document.getElementById('xOffset').value) * 1e-2;
+      let y_off = parseFloat(document.getElementById('yOffset').value) * 1e-2;
+      let z_off = parseFloat(document.getElementById('zOffset').value) * 1e-2;
+      let phi = parseFloat(document.getElementById('phi').value) * Math.PI / 180;
+      let theta = parseFloat(document.getElementById('theta').value) * Math.PI / 180;
+
+      const sweepVar = document.getElementById('sweepVar').value;
+      const sweepMin = parseFloat(document.getElementById('sweepMin').value);
+      const sweepMax = parseFloat(document.getElementById('sweepMax').value);
+      const sweepStep = parseFloat(document.getElementById('sweepStep').value);
+
+      const points = [];
+      for (let v = sweepMin; v <= sweepMax + 1e-12; v += sweepStep) {
+        points.push(parseFloat(v.toFixed(6)));
+      }
+
+      const dataM = [];
+      const labels = points.map(v => v.toFixed(3));
+
+      for (let k = 0; k < points.length; k++) {
+        switch (sweepVar) {
+          case 'x': x_off = points[k] * 1e-2; break;
+          case 'y': y_off = points[k] * 1e-2; break;
+          case 'z': z_off = points[k] * 1e-2; break;
+          case 'phi': phi = points[k] * Math.PI / 180; break;
+          case 'theta': theta = points[k] * Math.PI / 180; break;
+        }
+        const a = Math.sin(phi) * Math.sin(theta);
+        const b = -Math.cos(phi) * Math.sin(theta);
+        const c = Math.cos(theta);
+
+        let Rp = new Array(N_tx);
+        let z_tx = new Array(N_tx);
+        for (let i = 0; i < N_tx; i++) {
+          const pitch_tx = (i < p_tx_array.length ? p_tx_array[i] : p_tx_array[p_tx_array.length - 1]);
+          Rp[i] = r_max_tx - i * pitch_tx;
+          z_tx[i] = 0;
+        }
+
+        let Rs = new Array(N_rx);
+        let z_rx = new Array(N_rx);
+        for (let j = 0; j < N_rx; j++) {
+          const pitch_rx = (j < p_rx_array.length ? p_rx_array[j] : p_rx_array[p_rx_array.length - 1]);
+          Rs[j] = r_max_rx - j * pitch_rx;
+          z_rx[j] = z_off;
+        }
+
+        let Msum = 0;
+        for (let i = 0; i < N_tx; i++) {
+          for (let j = 0; j < N_rx; j++) {
+            let zc = z_rx[j] - z_tx[i];
+            let Mij = Babic_24(Rp[i], Rs[j], [x_off, y_off, zc], [a, b, c]);
+            if (!isFinite(Mij) || isNaN(Mij)) {
+              zc += 1e-8;
+              Mij = Babic_24(Rp[i], Rs[j], [x_off, y_off, zc], [a, b, c]);
+              if (!isFinite(Mij) || isNaN(Mij)) {
+                Mij = 0;
+              }
+            }
+            Msum += Mij;
+          }
+        }
+        dataM.push(Msum * 1e6);
+      }
+
+      sweepLabels = labels;
+      sweepValues = dataM;
+
+      const ctx = document.getElementById('sweepChart').getContext('2d');
+      if (window.sweepChartInstance) {
+        window.sweepChartInstance.destroy();
+      }
+      window.sweepChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: `${sweepVar} vs M (μH)`,
+            data: dataM,
+            borderColor: '#1abc9c',
+            backgroundColor: 'rgba(26, 188, 156, 0.2)',
+            fill: true,
+            tension: 0.2
+          }]
+        },
+        options: {
+          scales: {
+            x: {
+              display: true,
+              title: {
+                display: true,
+                text: sweepVar + (['phi','theta'].includes(sweepVar) ? ' (deg)' : ' (cm)')
+              }
+            },
+            y: {
+              display: true,
+              title: {
+                display: true,
+                text: 'M (μH)'
+              }
+            }
+          },
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return context.parsed.y.toFixed(6) + ' μH';
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function saveSweepData() {
+      if (!sweepLabels.length) {
+        alert('No sweep data to save. Please plot first.');
+        return;
+      }
+      const lines = [['Variable', 'M(μH)']];
+      for (let i = 0; i < sweepLabels.length; i++) {
+        lines.push([sweepLabels[i], sweepValues[i].toFixed(6)]);
+      }
+      const csvContent = lines.map(e => e.join(' ')).join('\n');
+      const blob = new Blob([csvContent], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `sweep_data.txt`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+
+    window.addEventListener('load', () => {
+      initThree();
+      const ctx = document.getElementById('sweepChart').getContext('2d');
+      window.sweepChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: [''],
+          datasets: [{
+            label: '',
+            data: [0],
+            borderColor: '#1abc9c',
+            backgroundColor: 'rgba(26, 188, 156, 0.2)',
+            fill: true,
+            tension: 0.2
+          }]
+        },
+        options: {
+          scales: {
+            x: { display: true, title: { display: true, text: '' } },
+            y: { display: true, title: { display: true, text: '' } }
+          },
+          plugins: { tooltip: { enabled: false } }
+        }
+      });
+    });
+
+    document.getElementById('calculateBtn').addEventListener('click', calculateMutualInductance);
+    document.getElementById('plotBtn').addEventListener('click', plotSweepGraph);
+    document.getElementById('saveDataBtn').addEventListener('click', saveSweepData);
+  </script>
+</body>
+</html>
