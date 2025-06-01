@@ -46,7 +46,7 @@
       gap: 2rem;
       flex-wrap: wrap;
       margin-bottom: 1rem;
-      align-items: flex-start; /* ensure top alignment */
+      align-items: flex-start; /* 왼쪽 열과 위쪽 정렬 */
     }
     .column {
       flex: 1;
@@ -153,7 +153,7 @@
     <h1>Mutual Inductance Calculator for Circular Coils</h1>
   </header>
   <div class="container">
-    <!-- Section: Coil & Offset Inputs -->
+    <!-- Section: Coil & Position 구역 -->
     <div class="section">
       <h2>Coil Parameters & Position</h2>
       <div class="three-column-row">
@@ -207,30 +207,25 @@
           </div>
         </div>
 
-        <!-- Position & Orientation Column (wider) -->
+        <!-- Position & Orientation Column (넓게) -->
         <div class="column position-column">
           <h3>Position &amp; Orientation</h3>
-          <!-- Offset x on its own row -->
           <div class="field">
             <label for="xOffset">Offset x (cm)</label>
             <input type="number" id="xOffset" value="0" step="0.1" />
           </div>
-          <!-- Offset y on its own row -->
           <div class="field">
             <label for="yOffset">Offset y (cm)</label>
             <input type="number" id="yOffset" value="0" step="0.1" />
           </div>
-          <!-- Offset z on its own row -->
           <div class="field">
             <label for="zOffset">Offset z (cm)</label>
             <input type="number" id="zOffset" value="0" step="0.1" />
           </div>
-          <!-- Theta on its own row -->
           <div class="field">
             <label for="theta">Tilt θ (deg)</label>
             <input type="number" id="theta" value="0" step="1" />
           </div>
-          <!-- Phi on its own row -->
           <div class="field">
             <label for="phi">Rotation φ (deg)</label>
             <input type="number" id="phi" value="0" step="1" />
@@ -240,7 +235,6 @@
 
       <button id="calculateBtn">Calculate Mutual Inductance</button>
       <div id="result" class="result"></div>
-      <div id="progress"></div>
     </div>
 
     <!-- Section: Coil Visualization -->
@@ -252,7 +246,6 @@
     <!-- Section: Graph Controls -->
     <div class="section">
       <h2>Sweep & Graph</h2>
-      <!-- Sweep min, max, step on one line -->
       <div class="sweep-row">
         <div class="sweep-field">
           <label for="sweepVar">Sweep Variable</label>
@@ -279,6 +272,7 @@
       </div>
       <button id="plotBtn">Plot Sweep Graph</button>
       <button id="saveDataBtn">Save Sweep Data</button>
+      <div id="progress"></div>
       <div class="chart-container">
         <canvas id="sweepChart"></canvas>
       </div>
@@ -681,7 +675,7 @@
 
       const tubeRadius = 0.05;
 
-      // Transmitter: draw N_spiral_tx × N_helix_tx loops
+      // Transmitter: draw 모든 loop
       for (let i = 0; i < N_spiral_tx; i++) {
         const pitch_s_tx = (i < p_spiral_tx.length ? p_spiral_tx[i] : p_spiral_tx[p_spiral_tx.length - 1]);
         const radius = r_max_tx_cm - i * pitch_s_tx;
@@ -702,7 +696,7 @@
         }
       }
 
-      // Receiver: draw N_spiral_rx × N_helix_rx loops
+      // Receiver: draw 모든 loop
       for (let i = 0; i < N_spiral_rx; i++) {
         const pitch_s_rx = (i < p_spiral_rx.length ? p_spiral_rx[i] : p_spiral_rx[p_spiral_rx.length - 1]);
         const radius = r_max_rx_cm - i * pitch_s_rx;
@@ -725,7 +719,7 @@
       }
     }
 
-    // Storage for sweep data
+    // Sweep Data 저장용
     let sweepLabels = [];
     let sweepValues = [];
 
@@ -851,9 +845,7 @@
       const dataM = [];
       const labels = points.map(v => v.toFixed(3));
 
-      // Perform loop with progress updates
       for (let k = 0; k < points.length; k++) {
-        // Update progress
         const percent = Math.round(((k + 1) / points.length) * 100);
         progressDiv.textContent = `Progress: ${percent}%`;
 
@@ -868,7 +860,6 @@
         const b = -Math.cos(phi) * Math.sin(theta);
         const c = Math.cos(theta);
 
-        // Build Tx arrays
         const N_tx = N_spiral_tx * N_helix_tx;
         let Rp_tx = new Array(N_tx);
         let z_tx  = new Array(N_tx);
@@ -884,7 +875,6 @@
           }
         }
 
-        // Build Rx arrays
         const N_rx = N_spiral_rx * N_helix_rx;
         let Rs_rx = new Array(N_rx);
         let z_rx  = new Array(N_rx);
@@ -900,7 +890,6 @@
           }
         }
 
-        // Sum M_ij
         let Msum = 0;
         for (let i = 0; i < N_tx; i++) {
           for (let j = 0; j < N_rx; j++) {
@@ -919,8 +908,7 @@
         dataM.push(Msum * 1e6);
       }
 
-      // Clear progress text
-      progressDiv.textContent = '';
+      progressDiv.textContent = ''; // 완료되면 비움
 
       sweepLabels = labels;
       sweepValues = dataM;
