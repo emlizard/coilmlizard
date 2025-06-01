@@ -46,7 +46,7 @@
       gap: 2rem;
       flex-wrap: wrap;
       margin-bottom: 1rem;
-      align-items: flex-start; /* 왼쪽 열과 위쪽 정렬 */
+      align-items: flex-start;
     }
     .column {
       flex: 1;
@@ -98,6 +98,7 @@
       margin-top: 0.5rem;
       font-size: 0.9rem;
       color: #555;
+      min-height: 1.2em;
     }
     .sweep-row {
       display: flex;
@@ -805,7 +806,8 @@
       updateCoilVisuals();
     }
 
-    function plotSweepGraph() {
+    // Async version for incremental chart updates
+    async function plotSweepGraph() {
       const progressDiv = document.getElementById('progress');
       progressDiv.textContent = 'Progress: 0%';
 
@@ -842,10 +844,15 @@
         points.push(parseFloat(v.toFixed(6)));
       }
 
-      const dataM = [];
-      const labels = points.map(v => v.toFixed(3));
+      // 초기화: 차트 데이터 비우기
+      sweepLabels = [];
+      sweepValues = [];
+      window.sweepChartInstance.data.labels = [];
+      window.sweepChartInstance.data.datasets[0].data = [];
+      window.sweepChartInstance.update();
 
       for (let k = 0; k < points.length; k++) {
+        // 진행률 업데이트
         const percent = Math.round(((k + 1) / points.length) * 100);
         progressDiv.textContent = `Progress: ${percent}%`;
 
@@ -860,6 +867,7 @@
         const b = -Math.cos(phi) * Math.sin(theta);
         const c = Math.cos(theta);
 
+        // Tx 배열
         const N_tx = N_spiral_tx * N_helix_tx;
         let Rp_tx = new Array(N_tx);
         let z_tx  = new Array(N_tx);
@@ -875,6 +883,7 @@
           }
         }
 
+        // Rx 배열
         const N_rx = N_spiral_rx * N_helix_rx;
         let Rs_rx = new Array(N_rx);
         let z_rx  = new Array(N_rx);
@@ -890,6 +899,7 @@
           }
         }
 
+        // Msum 계산
         let Msum = 0;
         for (let i = 0; i < N_tx; i++) {
           for (let j = 0; j < N_rx; j++) {
@@ -905,59 +915,21 @@
             Msum += Mij;
           }
         }
-        dataM.push(Msum * 1e6);
+        const Mval = Msum * 1e6;
+
+        // 차트 업데이트: 레이블, 데이터 추가
+        sweepLabels.push(points[k].toFixed(3));
+        sweepValues.push(Mval);
+        window.sweepChartInstance.data.labels = sweepLabels.slice();
+        window.sweepChartInstance.data.datasets[0].data = sweepValues.slice();
+        window.sweepChartInstance.update();
+
+        // 짧게 대기해서 UI가 갱신될 시간 확보
+        await new Promise(resolve => setTimeout(resolve, 0));
       }
 
-      progressDiv.textContent = ''; // 완료되면 비움
-
-      sweepLabels = labels;
-      sweepValues = dataM;
-
-      const ctx = document.getElementById('sweepChart').getContext('2d');
-      if (window.sweepChartInstance) {
-        window.sweepChartInstance.destroy();
-      }
-      window.sweepChartInstance = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: `${sweepVar} vs M (μH)`,
-            data: dataM,
-            borderColor: '#1abc9c',
-            backgroundColor: 'rgba(26, 188, 156, 0.2)',
-            fill: true,
-            tension: 0.2
-          }]
-        },
-        options: {
-          scales: {
-            x: {
-              display: true,
-              title: {
-                display: true,
-                text: sweepVar + (['phi','theta'].includes(sweepVar) ? ' (deg)' : ' (cm)')
-              }
-            },
-            y: {
-              display: true,
-              title: {
-                display: true,
-                text: 'M (μH)'
-              }
-            }
-          },
-          plugins: {
-            tooltip: {
-              callbacks: {
-                label: function(context) {
-                  return context.parsed.y.toFixed(6) + ' μH';
-                }
-              }
-            }
-          }
-        }
-      });
+      // 완료되면 진행률 표시 제거
+      progressDiv.textContent = '';
     }
 
     function saveSweepData() {
@@ -987,10 +959,10 @@
       window.sweepChartInstance = new Chart(ctx, {
         type: 'line',
         data: {
-          labels: [''],
+          labels: [],
           datasets: [{
             label: '',
-            data: [0],
+            data: [],
             borderColor: '#1abc9c',
             backgroundColor: 'rgba(26, 188, 156, 0.2)',
             fill: true,
@@ -1002,13 +974,15 @@
             x: { display: true, title: { display: true, text: '' } },
             y: { display: true, title: { display: true, text: '' } }
           },
-          plugins: { tooltip: { enabled: false } }
+          plugins: { tooltip: { enabled: true } }
         }
       });
     });
 
     document.getElementById('calculateBtn').addEventListener('click', calculateMutualInductance);
-    document.getElementById('plotBtn').addEventListener('click', plotSweepGraph);
+    document.getElementById('plotBtn').addEventListener('click', () => {
+      plotSweepGraph();
+    });
     document.getElementById('saveDataBtn').addEventListener('click', saveSweepData);
   </script>
 </body>
