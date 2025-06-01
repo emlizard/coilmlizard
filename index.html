@@ -41,12 +41,36 @@
       border-bottom: 2px solid #ccc;
       padding-bottom: 0.5rem;
     }
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1rem;
+    /* Three-column row */
+    .three-column-row {
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
     }
-    .grid .field {
+    .column {
+      flex: 1;
+      min-width: 240px;
+    }
+    /* Make Position column wider */
+    .position-column {
+      flex: 2;
+    }
+    .column h3 {
+      margin-bottom: 0.5rem;
+    }
+    /* Offset row (inside Position column) */
+    .offset-row {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+    .offset-field {
+      flex: 1;
+      min-width: 100px;
+    }
+    .field {
       margin-bottom: 1rem;
     }
     label {
@@ -91,6 +115,18 @@
       border-radius: 4px;
       font-size: 1.1rem;
     }
+    /* Sweep controls as one row */
+    .sweep-row {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+      align-items: flex-end;
+    }
+    .sweep-field {
+      flex: 1;
+      min-width: 100px;
+    }
     .chart-container {
       margin-top: 2rem;
     }
@@ -134,12 +170,12 @@
     <h1>Mutual Inductance Calculator for Circular Coils</h1>
   </header>
   <div class="container">
-    <!-- Section: Coil Parameters Input -->
+    <!-- Section: Coil & Offset Inputs -->
     <div class="section">
-      <h2>Coil Parameters</h2>
-      <div class="grid">
-        <!-- Transmitter Coil (Primary) Inputs -->
-        <div>
+      <h2>Coil Parameters & Position</h2>
+      <div class="three-column-row">
+        <!-- Transmitter Coil (Primary) Column -->
+        <div class="column">
           <h3>Transmitter Coil (Primary)</h3>
           <div class="radio-group">
             <label><input type="radio" name="txShape" value="spiral" checked /> Spiral</label>
@@ -158,8 +194,9 @@
             <input type="number" id="nTx" value="10" />
           </div>
         </div>
-        <!-- Receiver Coil (Secondary) Inputs -->
-        <div>
+
+        <!-- Receiver Coil (Secondary) Column -->
+        <div class="column">
           <h3>Receiver Coil (Secondary)</h3>
           <div class="radio-group">
             <label><input type="radio" name="rxShape" value="spiral" checked /> Spiral</label>
@@ -178,30 +215,42 @@
             <input type="number" id="nRx" value="10" />
           </div>
         </div>
-        
-      <h3>Position & Orientation</h3>
-      <div class="grid">
-        <div class="field">
-          <label for="xOffset">Offset x (cm)</label>
-          <input type="number" id="xOffset" value="0" step="0.1" />
+
+        <!-- Position Column (wider) -->
+                <!-- Position Column (wider) -->
+        <div class="column position-column">
+          <h3>Position</h3>
+          <!-- Offset x, y, z on one line -->
+          <div class="offset-row">
+            <div class="offset-field">
+              <label for="xOffset">Offset x (cm)</label>
+              <input type="number" id="xOffset" value="0" step="0.1" />
+            </div>
+            <div class="offset-field">
+              <label for="yOffset">Offset y (cm)</label>
+              <input type="number" id="yOffset" value="0" step="0.1" />
+            </div>
+            <div class="offset-field">
+              <label for="zOffset">Offset z (cm)</label>
+              <input type="number" id="zOffset" value="0" step="0.1" />
+            </div>
+          </div>
+
+          <h3>Orientation</h3>
+          <!-- Theta on its own row -->
+          <div class="field">
+            <label for="theta">Tilt θ (deg)</label>
+            <input type="number" id="theta" value="0" step="1" />
+          </div>
+          <!-- Phi on its own row -->
+          <div class="field">
+            <label for="phi">Rotation φ (deg)</label>
+            <input type="number" id="phi" value="0" step="1" />
+          </div>
         </div>
-        <div class="field">
-          <label for="yOffset">Offset y (cm)</label>
-          <input type="number" id="yOffset" value="0" step="0.1" />
-        </div>
-        <div class="field">
-          <label for="zOffset">Offset z (cm)</label>
-          <input type="number" id="zOffset" value="0" step="0.1" />
-        </div>
-        <div class="field">
-          <label for="phi">Rotation φ (deg)</label>
-          <input type="number" id="phi" value="0" step="1" />
-        </div>
-        <div class="field">
-          <label for="theta">Tilt θ (deg)</label>
-          <input type="number" id="theta" value="0" step="1" />
-        </div>
+
       </div>
+
       <button id="calculateBtn">Calculate Mutual Inductance</button>
       <div id="result" class="result"></div>
     </div>
@@ -215,8 +264,9 @@
     <!-- Section: Graph Controls -->
     <div class="section">
       <h2>Sweep & Graph</h2>
-      <div class="grid">
-        <div>
+      <!-- Sweep min, max, step on one line -->
+      <div class="sweep-row">
+        <div class="sweep-field">
           <label for="sweepVar">Sweep Variable</label>
           <select id="sweepVar">
             <option value="x">x (cm)</option>
@@ -226,15 +276,15 @@
             <option value="theta">θ (deg)</option>
           </select>
         </div>
-        <div class="field">
+        <div class="sweep-field">
           <label for="sweepMin">Min</label>
           <input type="number" id="sweepMin" value="0" step="0.1" />
         </div>
-        <div class="field">
+        <div class="sweep-field">
           <label for="sweepMax">Max</label>
           <input type="number" id="sweepMax" value="10" step="0.1" />
         </div>
-        <div class="field">
+        <div class="sweep-field">
           <label for="sweepStep">Step</label>
           <input type="number" id="sweepStep" value="1" step="0.1" />
         </div>
@@ -250,8 +300,8 @@
     <div class="formulas">
       <h2>Formulas Used</h2>
       <div class="references">
-        References:  
-        1. S. Babic, F. Sirois, C. Akyel, C. Girardi, “Mutual Inductance Calculation Between Two Circular Loops Using 24-Point Gauss Quadrature,” <em>IEEE Trans. Magn.</em>, 2010.  
+        References:<br />
+        1. S. Babic, F. Sirois, C. Akyel, C. Girardi, “Mutual Inductance Calculation Between Two Circular Loops Using 24-Point Gauss Quadrature,” <em>IEEE Trans. Magn.</em>, 2010.<br />
         2. M. Kacenak, “Romberg Integration Algorithm,” Technical University of Kosice, 2001.
       </div>
 
