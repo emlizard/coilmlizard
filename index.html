@@ -46,6 +46,7 @@
       gap: 2rem;
       flex-wrap: wrap;
       margin-bottom: 1rem;
+      align-items: flex-start; /* ensure top alignment */
     }
     .column {
       flex: 1;
@@ -92,6 +93,11 @@
       background: #ecf0f1;
       border-radius: 4px;
       font-size: 1.1rem;
+    }
+    #progress {
+      margin-top: 0.5rem;
+      font-size: 0.9rem;
+      color: #555;
     }
     .sweep-row {
       display: flex;
@@ -204,22 +210,27 @@
         <!-- Position & Orientation Column (wider) -->
         <div class="column position-column">
           <h3>Position &amp; Orientation</h3>
+          <!-- Offset x on its own row -->
           <div class="field">
             <label for="xOffset">Offset x (cm)</label>
             <input type="number" id="xOffset" value="0" step="0.1" />
           </div>
+          <!-- Offset y on its own row -->
           <div class="field">
             <label for="yOffset">Offset y (cm)</label>
             <input type="number" id="yOffset" value="0" step="0.1" />
           </div>
+          <!-- Offset z on its own row -->
           <div class="field">
             <label for="zOffset">Offset z (cm)</label>
             <input type="number" id="zOffset" value="0" step="0.1" />
           </div>
+          <!-- Theta on its own row -->
           <div class="field">
             <label for="theta">Tilt θ (deg)</label>
             <input type="number" id="theta" value="0" step="1" />
           </div>
+          <!-- Phi on its own row -->
           <div class="field">
             <label for="phi">Rotation φ (deg)</label>
             <input type="number" id="phi" value="0" step="1" />
@@ -229,6 +240,7 @@
 
       <button id="calculateBtn">Calculate Mutual Inductance</button>
       <div id="result" class="result"></div>
+      <div id="progress"></div>
     </div>
 
     <!-- Section: Coil Visualization -->
@@ -388,10 +400,6 @@
   </div>
 
   <script>
-    // ------------------------------ //
-    // JavaScript Implementation      //
-    // ------------------------------ //
-
     // Elliptic integrals via AGM algorithm
     function ellipke(m) {
       let a = 1.0;
@@ -673,7 +681,7 @@
 
       const tubeRadius = 0.05;
 
-      // Transmitter
+      // Transmitter: draw N_spiral_tx × N_helix_tx loops
       for (let i = 0; i < N_spiral_tx; i++) {
         const pitch_s_tx = (i < p_spiral_tx.length ? p_spiral_tx[i] : p_spiral_tx[p_spiral_tx.length - 1]);
         const radius = r_max_tx_cm - i * pitch_s_tx;
@@ -694,7 +702,7 @@
         }
       }
 
-      // Receiver
+      // Receiver: draw N_spiral_rx × N_helix_rx loops
       for (let i = 0; i < N_spiral_rx; i++) {
         const pitch_s_rx = (i < p_spiral_rx.length ? p_spiral_rx[i] : p_spiral_rx[p_spiral_rx.length - 1]);
         const radius = r_max_rx_cm - i * pitch_s_rx;
@@ -717,6 +725,7 @@
       }
     }
 
+    // Storage for sweep data
     let sweepLabels = [];
     let sweepValues = [];
 
@@ -803,6 +812,9 @@
     }
 
     function plotSweepGraph() {
+      const progressDiv = document.getElementById('progress');
+      progressDiv.textContent = 'Progress: 0%';
+
       const r_max_tx = parseFloat(document.getElementById('rmaxTx').value) * 1e-2;
       const r_max_rx = parseFloat(document.getElementById('rmaxRx').value) * 1e-2;
 
@@ -839,7 +851,12 @@
       const dataM = [];
       const labels = points.map(v => v.toFixed(3));
 
+      // Perform loop with progress updates
       for (let k = 0; k < points.length; k++) {
+        // Update progress
+        const percent = Math.round(((k + 1) / points.length) * 100);
+        progressDiv.textContent = `Progress: ${percent}%`;
+
         switch (sweepVar) {
           case 'x': x_off = points[k] * 1e-2; break;
           case 'y': y_off = points[k] * 1e-2; break;
@@ -851,6 +868,7 @@
         const b = -Math.cos(phi) * Math.sin(theta);
         const c = Math.cos(theta);
 
+        // Build Tx arrays
         const N_tx = N_spiral_tx * N_helix_tx;
         let Rp_tx = new Array(N_tx);
         let z_tx  = new Array(N_tx);
@@ -866,6 +884,7 @@
           }
         }
 
+        // Build Rx arrays
         const N_rx = N_spiral_rx * N_helix_rx;
         let Rs_rx = new Array(N_rx);
         let z_rx  = new Array(N_rx);
@@ -881,6 +900,7 @@
           }
         }
 
+        // Sum M_ij
         let Msum = 0;
         for (let i = 0; i < N_tx; i++) {
           for (let j = 0; j < N_rx; j++) {
@@ -898,6 +918,9 @@
         }
         dataM.push(Msum * 1e6);
       }
+
+      // Clear progress text
+      progressDiv.textContent = '';
 
       sweepLabels = labels;
       sweepValues = dataM;
