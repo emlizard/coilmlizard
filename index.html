@@ -41,7 +41,6 @@
       border-bottom: 2px solid #ccc;
       padding-bottom: 0.5rem;
     }
-    /* Three-column row */
     .three-column-row {
       display: flex;
       gap: 2rem;
@@ -52,23 +51,11 @@
       flex: 1;
       min-width: 240px;
     }
-    /* Make Position column wider */
     .position-column {
       flex: 2;
     }
     .column h3 {
       margin-bottom: 0.5rem;
-    }
-    /* Offset row (inside Position column) */
-    .offset-row {
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-      margin-bottom: 1rem;
-    }
-    .offset-field {
-      flex: 1;
-      min-width: 100px;
     }
     .field {
       margin-bottom: 1rem;
@@ -85,15 +72,6 @@
       padding: 0.5rem;
       border: 1px solid #ccc;
       border-radius: 4px;
-    }
-    .radio-group {
-      display: flex;
-      gap: 1rem;
-      margin-bottom: 1rem;
-    }
-    .radio-group label {
-      font-weight: normal;
-      margin-right: 0.5rem;
     }
     button {
       margin-top: 1rem;
@@ -115,7 +93,6 @@
       border-radius: 4px;
       font-size: 1.1rem;
     }
-    /* Sweep controls as one row */
     .sweep-row {
       display: flex;
       gap: 1rem;
@@ -177,67 +154,71 @@
         <!-- Transmitter Coil (Primary) Column -->
         <div class="column">
           <h3>Transmitter Coil (Primary)</h3>
-          <div class="radio-group">
-            <label><input type="radio" name="txShape" value="spiral" checked /> Spiral</label>
-            <label><input type="radio" name="txShape" value="helical" /> Helical</label>
-          </div>
           <div class="field">
             <label for="rmaxTx">Max Radius (cm)</label>
             <input type="number" id="rmaxTx" value="5" step="0.1" />
           </div>
           <div class="field">
-            <label for="pTx">Pitch p<sub>tx</sub> (mm)</label>
-            <input type="text" id="pTx" value="1" />
+            <label for="nSpiralTx">Spiral Turns N<sub>spiral,tx</sub></label>
+            <input type="number" id="nSpiralTx" value="5" step="1" />
           </div>
           <div class="field">
-            <label for="nTx">Turns N<sub>tx</sub></label>
-            <input type="number" id="nTx" value="10" />
+            <label for="pSpiralTx">Spiral Pitch p<sub>spiral,tx</sub> (mm)</label>
+            <input type="text" id="pSpiralTx" value="2" />
+          </div>
+          <div class="field">
+            <label for="nHelixTx">Helical Turns N<sub>helix,tx</sub></label>
+            <input type="number" id="nHelixTx" value="5" step="1" />
+          </div>
+          <div class="field">
+            <label for="pHelixTx">Helical Pitch p<sub>helix,tx</sub> (mm)</label>
+            <input type="text" id="pHelixTx" value="2" />
           </div>
         </div>
 
         <!-- Receiver Coil (Secondary) Column -->
         <div class="column">
           <h3>Receiver Coil (Secondary)</h3>
-          <div class="radio-group">
-            <label><input type="radio" name="rxShape" value="spiral" checked /> Spiral</label>
-            <label><input type="radio" name="rxShape" value="helical" /> Helical</label>
-          </div>
           <div class="field">
             <label for="rmaxRx">Max Radius (cm)</label>
             <input type="number" id="rmaxRx" value="5" step="0.1" />
           </div>
           <div class="field">
-            <label for="pRx">Pitch p<sub>rx</sub> (mm)</label>
-            <input type="text" id="pRx" value="1" />
+            <label for="nSpiralRx">Spiral Turns N<sub>spiral,rx</sub></label>
+            <input type="number" id="nSpiralRx" value="5" step="1" />
           </div>
           <div class="field">
-            <label for="nRx">Turns N<sub>rx</sub></label>
-            <input type="number" id="nRx" value="10" />
+            <label for="pSpiralRx">Spiral Pitch p<sub>spiral,rx</sub> (mm)</label>
+            <input type="text" id="pSpiralRx" value="2" />
+          </div>
+          <div class="field">
+            <label for="nHelixRx">Helical Turns N<sub>helix,rx</sub></label>
+            <input type="number" id="nHelixRx" value="5" step="1" />
+          </div>
+          <div class="field">
+            <label for="pHelixRx">Helical Pitch p<sub>helix,rx</sub> (mm)</label>
+            <input type="text" id="pHelixRx" value="2" />
           </div>
         </div>
 
-        <!-- Position Column (wider) -->
+        <!-- Position & Orientation Column (wider) -->
         <div class="column position-column">
-          <h3>Position of Receiver Coil</h3>
-          <h4></h4>
-          <!-- Offset x, y, z on one line -->
-          <div class="offset-row">
-            <div class="offset-field">
-              <label for="xOffset">Offset x (cm)</label>
-              <input type="number" id="xOffset" value="0" step="0.1" />
-            </div>
-            <div class="offset-field">
-              <label for="yOffset">Offset y (cm)</label>
-              <input type="number" id="yOffset" value="0" step="0.1" />
-            </div>
-            <div class="offset-field">
-              <label for="zOffset">Offset z (cm)</label>
-              <input type="number" id="zOffset" value="3" step="0.1" />
-            </div>
+          <h3>Position &amp; Orientation</h3>
+          <!-- Offset x on its own row -->
+          <div class="field">
+            <label for="xOffset">Offset x (cm)</label>
+            <input type="number" id="xOffset" value="0" step="0.1" />
           </div>
-    
-          <h3>Orientation</h3>
-  
+          <!-- Offset y on its own row -->
+          <div class="field">
+            <label for="yOffset">Offset y (cm)</label>
+            <input type="number" id="yOffset" value="0" step="0.1" />
+          </div>
+          <!-- Offset z on its own row -->
+          <div class="field">
+            <label for="zOffset">Offset z (cm)</label>
+            <input type="number" id="zOffset" value="0" step="0.1" />
+          </div>
           <!-- Theta on its own row -->
           <div class="field">
             <label for="theta">Tilt θ (deg)</label>
@@ -249,7 +230,6 @@
             <input type="number" id="phi" value="0" step="1" />
           </div>
         </div>
-
       </div>
 
       <button id="calculateBtn">Calculate Mutual Inductance</button>
@@ -258,7 +238,7 @@
 
     <!-- Section: Coil Visualization -->
     <div class="section">
-      <h2>Coil Visualization (Tx in XY Plane, Rx Tilted)</h2>
+      <h2>Coil Visualization (All Loops Drawn)</h2>
       <div id="coilVis"></div>
     </div>
 
@@ -526,27 +506,16 @@
       return mu0 * Rs * integralVal;
     }
 
-    // Helper to read selected radio value
-    function getRadioValue(name) {
-      const radios = document.getElementsByName(name);
-      for (const r of radios) {
-        if (r.checked) return r.value;
-      }
-      return null;
-    }
-
     // Three.js vars
     let scene, camera, renderer, controls, coilGroup;
-    let primaryCoilMesh = null;
-    let secondaryCoilMesh = null;
+    let txMeshes = [];
+    let rxMeshes = [];
 
-    // Initialize Three.js scene
     function initThree() {
       const container = document.getElementById('coilVis');
 
       scene = new THREE.Scene();
       scene.background = new THREE.Color(0xf7f9fa);
-      // Set scene “up” to Z axis
       scene.up.set(0, 0, 1);
 
       camera = new THREE.PerspectiveCamera(
@@ -555,7 +524,6 @@
         0.1,
         1000
       );
-      // Set camera up to Z axis
       camera.up.set(0, 0, 1);
       camera.position.set(15, 15, 15);
       camera.lookAt(0, 0, 0);
@@ -577,11 +545,8 @@
       dirLight.position.set(20, 20, 20);
       scene.add(dirLight);
 
-      // Draw custom axes (length 5)
       const axisLength = 5;
       const arrowThickness = 0.2;
-
-      // X-axis (red)
       const arrowX = new THREE.ArrowHelper(
         new THREE.Vector3(1, 0, 0),
         new THREE.Vector3(0, 0, 0),
@@ -592,7 +557,6 @@
       );
       scene.add(arrowX);
 
-      // Y-axis (green)
       const arrowY = new THREE.ArrowHelper(
         new THREE.Vector3(0, 1, 0),
         new THREE.Vector3(0, 0, 0),
@@ -603,7 +567,6 @@
       );
       scene.add(arrowY);
 
-      // Z-axis (blue)
       const arrowZ = new THREE.ArrowHelper(
         new THREE.Vector3(0, 0, 1),
         new THREE.Vector3(0, 0, 0),
@@ -623,7 +586,6 @@
       animateThree();
     }
 
-    // Add X, Y, Z labels at ends of axes
     function addAxisLabels(length) {
       function makeTextSprite(text, colorHex) {
         const canvas = document.createElement('canvas');
@@ -642,17 +604,14 @@
         return sprite;
       }
 
-      // X label at (length+1, 0, 0)
       const xLabel = makeTextSprite('X', '#ff0000');
       xLabel.position.set(length + 1, 0, 0);
       scene.add(xLabel);
 
-      // Y label at (0, length+1, 0)
       const yLabel = makeTextSprite('Y', '#00ff00');
       yLabel.position.set(0, length + 1, 0);
       scene.add(yLabel);
 
-      // Z label at (0, 0, length+1)
       const zLabel = makeTextSprite('Z', '#0000ff');
       zLabel.position.set(0, 0, length + 1);
       scene.add(zLabel);
@@ -671,22 +630,20 @@
       renderer.render(scene, camera);
     }
 
-    // Update coil meshes based on input (cm units)
     function updateCoilVisuals() {
-      if (primaryCoilMesh) {
-        coilGroup.remove(primaryCoilMesh);
-        primaryCoilMesh.geometry.dispose();
-        primaryCoilMesh.material.dispose();
-        primaryCoilMesh = null;
-      }
-      if (secondaryCoilMesh) {
-        coilGroup.remove(secondaryCoilMesh);
-        secondaryCoilMesh.geometry.dispose();
-        secondaryCoilMesh.material.dispose();
-        secondaryCoilMesh = null;
-      }
+      txMeshes.forEach(m => {
+        coilGroup.remove(m);
+        m.geometry.dispose();
+        m.material.dispose();
+      });
+      rxMeshes.forEach(m => {
+        coilGroup.remove(m);
+        m.geometry.dispose();
+        m.material.dispose();
+      });
+      txMeshes = [];
+      rxMeshes = [];
 
-      // Read inputs (cm)
       const r_max_tx_cm = parseFloat(document.getElementById('rmaxTx').value);
       const r_max_rx_cm = parseFloat(document.getElementById('rmaxRx').value);
       const x_off_cm = parseFloat(document.getElementById('xOffset').value);
@@ -698,100 +655,143 @@
       const phiRad = THREE.MathUtils.degToRad(phiDeg);
       const thetaRad = THREE.MathUtils.degToRad(thetaDeg);
 
-      // Tube thickness = 0.1 cm
-      const tubeRadius = 0.1;
+      const N_spiral_tx = parseInt(document.getElementById('nSpiralTx').value);
+      const N_helix_tx  = parseInt(document.getElementById('nHelixTx').value);
+      const p_spiral_tx = document.getElementById('pSpiralTx').value
+        .split(',').map(x => parseFloat(x.trim()) * 1e-1);
+      const p_helix_tx  = document.getElementById('pHelixTx').value
+        .split(',').map(x => parseFloat(x.trim()) * 1e-1);
 
-      // Primary coil: torus in XY plane (normal along Z), no extra rotation
-      const primaryGeom = new THREE.TorusGeometry(r_max_tx_cm, tubeRadius, 16, 128);
-      const primaryMat = new THREE.MeshPhongMaterial({
-        color: 0x0077ff,
-        shininess: 80
-      });
-      primaryCoilMesh = new THREE.Mesh(primaryGeom, primaryMat);
-      primaryCoilMesh.position.set(0, 0, 0);
-      coilGroup.add(primaryCoilMesh);
+      const N_spiral_rx = parseInt(document.getElementById('nSpiralRx').value);
+      const N_helix_rx  = parseInt(document.getElementById('nHelixRx').value);
+      const p_spiral_rx = document.getElementById('pSpiralRx').value
+        .split(',').map(x => parseFloat(x.trim()) * 1e-1);
+      const p_helix_rx  = document.getElementById('pHelixRx').value
+        .split(',').map(x => parseFloat(x.trim()) * 1e-1);
 
-      // Secondary coil: torus, rotate its normal to [sinθ cosφ, sinθ sinφ, cosθ]
-      const secondaryGeom = new THREE.TorusGeometry(r_max_rx_cm, tubeRadius, 16, 128);
-      const secondaryMat = new THREE.MeshPhongMaterial({
-        color: 0xff3333,
-        shininess: 80,
-        opacity: 0.8,
-        transparent: true
-      });
-      secondaryCoilMesh = new THREE.Mesh(secondaryGeom, secondaryMat);
-
-      // Compute desired normal vector n = (sinθ cosφ, sinθ sinφ, cosθ)
       const nx = Math.sin(thetaRad) * Math.cos(phiRad);
       const ny = Math.sin(thetaRad) * Math.sin(phiRad);
       const nz = Math.cos(thetaRad);
       const nVec = new THREE.Vector3(nx, ny, nz).normalize();
-
-      // Create quaternion to rotate default normal [0,0,1] → nVec
       const quat = new THREE.Quaternion();
       quat.setFromUnitVectors(new THREE.Vector3(0, 0, 1), nVec);
-      secondaryCoilMesh.setRotationFromQuaternion(quat);
 
-      // Apply offset (cm)
-      secondaryCoilMesh.position.set(x_off_cm, y_off_cm, z_off_cm);
+      const tubeRadius = 0.05;
 
-      coilGroup.add(secondaryCoilMesh);
+      // Transmitter
+      for (let i = 0; i < N_spiral_tx; i++) {
+        const pitch_s_tx = (i < p_spiral_tx.length ? p_spiral_tx[i] : p_spiral_tx[p_spiral_tx.length - 1]);
+        const radius = r_max_tx_cm - i * pitch_s_tx;
+        for (let j = 0; j < N_helix_tx; j++) {
+          const pitch_h_tx = (j < p_helix_tx.length ? p_helix_tx[j] : p_helix_tx[p_helix_tx.length - 1]);
+          const zPos = j * pitch_h_tx;
+          const geom = new THREE.TorusGeometry(radius, tubeRadius, 16, 128);
+          const mat = new THREE.MeshPhongMaterial({
+            color: 0x0077ff,
+            shininess: 80,
+            opacity: 0.7,
+            transparent: true
+          });
+          const mesh = new THREE.Mesh(geom, mat);
+          mesh.position.set(0, 0, zPos);
+          coilGroup.add(mesh);
+          txMeshes.push(mesh);
+        }
+      }
+
+      // Receiver
+      for (let i = 0; i < N_spiral_rx; i++) {
+        const pitch_s_rx = (i < p_spiral_rx.length ? p_spiral_rx[i] : p_spiral_rx[p_spiral_rx.length - 1]);
+        const radius = r_max_rx_cm - i * pitch_s_rx;
+        for (let j = 0; j < N_helix_rx; j++) {
+          const pitch_h_rx = (j < p_helix_rx.length ? p_helix_rx[j] : p_helix_rx[p_helix_rx.length - 1]);
+          const zPos = z_off_cm + j * pitch_h_rx;
+          const geom = new THREE.TorusGeometry(radius, tubeRadius, 16, 128);
+          const mat = new THREE.MeshPhongMaterial({
+            color: 0xff3333,
+            shininess: 80,
+            opacity: 0.7,
+            transparent: true
+          });
+          const mesh = new THREE.Mesh(geom, mat);
+          mesh.setRotationFromQuaternion(quat);
+          mesh.position.set(x_off_cm, y_off_cm, zPos);
+          coilGroup.add(mesh);
+          rxMeshes.push(mesh);
+        }
+      }
     }
 
-    // Storage for sweep data
     let sweepLabels = [];
     let sweepValues = [];
 
-    // Main mutual inductance calculation
     function calculateMutualInductance() {
-      const txShape = getRadioValue('txShape');
-      const rxShape = getRadioValue('rxShape');
-      const r_max_tx = parseFloat(document.getElementById('rmaxTx').value) * 1e-2; // cm→m
-      const r_max_rx = parseFloat(document.getElementById('rmaxRx').value) * 1e-2; // cm→m
-      const p_tx_array = document.getElementById('pTx').value.split(',').map(x => parseFloat(x.trim()) * 1e-3);
-      const p_rx_array = document.getElementById('pRx').value.split(',').map(x => parseFloat(x.trim()) * 1e-3);
-      const N_tx = parseInt(document.getElementById('nTx').value);
-      const N_rx = parseInt(document.getElementById('nRx').value);
+      const r_max_tx = parseFloat(document.getElementById('rmaxTx').value) * 1e-2;
+      const r_max_rx = parseFloat(document.getElementById('rmaxRx').value) * 1e-2;
+
+      const p_spiral_tx = document.getElementById('pSpiralTx').value.split(',')
+        .map(x => parseFloat(x.trim()) * 1e-3);
+      const p_helix_tx = document.getElementById('pHelixTx').value.split(',')
+        .map(x => parseFloat(x.trim()) * 1e-3);
+      const N_spiral_tx = parseInt(document.getElementById('nSpiralTx').value);
+      const N_helix_tx  = parseInt(document.getElementById('nHelixTx').value);
+
+      const p_spiral_rx = document.getElementById('pSpiralRx').value.split(',')
+        .map(x => parseFloat(x.trim()) * 1e-3);
+      const p_helix_rx = document.getElementById('pHelixRx').value.split(',')
+        .map(x => parseFloat(x.trim()) * 1e-3);
+      const N_spiral_rx = parseInt(document.getElementById('nSpiralRx').value);
+      const N_helix_rx  = parseInt(document.getElementById('nHelixRx').value);
 
       let x_off = parseFloat(document.getElementById('xOffset').value) * 1e-2;
       let y_off = parseFloat(document.getElementById('yOffset').value) * 1e-2;
       let z_off = parseFloat(document.getElementById('zOffset').value) * 1e-2;
 
-      let phi = parseFloat(document.getElementById('phi').value) * Math.PI / 180;
+      let phi   = parseFloat(document.getElementById('phi').value) * Math.PI / 180;
       let theta = parseFloat(document.getElementById('theta').value) * Math.PI / 180;
 
       const a = Math.sin(phi) * Math.sin(theta);
       const b = -Math.cos(phi) * Math.sin(theta);
       const c = Math.cos(theta);
 
-      // Build Rp, z_tx
-      let Rp = new Array(N_tx);
-      let z_tx = new Array(N_tx);
-      for (let i = 0; i < N_tx; i++) {
-        const pitch_tx = (i < p_tx_array.length ? p_tx_array[i] : p_tx_array[p_tx_array.length - 1]);
-        Rp[i] = r_max_tx - i * pitch_tx;
-        z_tx[i] = 0;
+      const N_tx = N_spiral_tx * N_helix_tx;
+      let Rp_tx = new Array(N_tx);
+      let z_tx  = new Array(N_tx);
+      for (let i = 0; i < N_spiral_tx; i++) {
+        const pitch_s = (i < p_spiral_tx.length ? p_spiral_tx[i] : p_spiral_tx[p_spiral_tx.length - 1]);
+        const radius = r_max_tx - i * pitch_s;
+        for (let j = 0; j < N_helix_tx; j++) {
+          const idx = i * N_helix_tx + j;
+          const pitch_h = (j < p_helix_tx.length ? p_helix_tx[j] : p_helix_tx[p_helix_tx.length - 1]);
+          const zPos = j * pitch_h;
+          Rp_tx[idx] = radius;
+          z_tx[idx]  = zPos;
+        }
       }
 
-      // Build Rs, z_rx
-      let Rs = new Array(N_rx);
-      let z_rx = new Array(N_rx);
-      for (let j = 0; j < N_rx; j++) {
-        const pitch_rx = (j < p_rx_array.length ? p_rx_array[j] : p_rx_array[p_rx_array.length - 1]);
-        Rs[j] = r_max_rx - j * pitch_rx;
-        z_rx[j] = z_off;
+      const N_rx = N_spiral_rx * N_helix_rx;
+      let Rs_rx = new Array(N_rx);
+      let z_rx  = new Array(N_rx);
+      for (let i = 0; i < N_spiral_rx; i++) {
+        const pitch_s = (i < p_spiral_rx.length ? p_spiral_rx[i] : p_spiral_rx[p_spiral_rx.length - 1]);
+        const radius = r_max_rx - i * pitch_s;
+        for (let j = 0; j < N_helix_rx; j++) {
+          const idx = i * N_helix_rx + j;
+          const pitch_h = (j < p_helix_rx.length ? p_helix_rx[j] : p_helix_rx[p_helix_rx.length - 1]);
+          const zPos = z_off + j * pitch_h;
+          Rs_rx[idx] = radius;
+          z_rx[idx]  = zPos;
+        }
       }
 
-      // Sum M_ij
       let Msum = 0;
       for (let i = 0; i < N_tx; i++) {
         for (let j = 0; j < N_rx; j++) {
           let zc = z_rx[j] - z_tx[i];
-          let Mij = Babic_24(Rp[i], Rs[j], [x_off, y_off, zc], [a, b, c]);
+          let Mij = Babic_24(Rp_tx[i], Rs_rx[j], [x_off, y_off, zc], [a, b, c]);
           if (!isFinite(Mij) || isNaN(Mij)) {
-            // small adjustment +0.00001 mm = 1e-8 m
             zc += 1e-8;
-            Mij = Babic_24(Rp[i], Rs[j], [x_off, y_off, zc], [a, b, c]);
+            Mij = Babic_24(Rp_tx[i], Rs_rx[j], [x_off, y_off, zc], [a, b, c]);
             if (!isFinite(Mij) || isNaN(Mij)) {
               Mij = 0;
             }
@@ -807,21 +807,28 @@
       updateCoilVisuals();
     }
 
-    // Plot sweep graph
     function plotSweepGraph() {
-      const txShape = getRadioValue('txShape');
-      const rxShape = getRadioValue('rxShape');
       const r_max_tx = parseFloat(document.getElementById('rmaxTx').value) * 1e-2;
       const r_max_rx = parseFloat(document.getElementById('rmaxRx').value) * 1e-2;
-      const p_tx_array = document.getElementById('pTx').value.split(',').map(x => parseFloat(x.trim()) * 1e-3);
-      const p_rx_array = document.getElementById('pRx').value.split(',').map(x => parseFloat(x.trim()) * 1e-3);
-      const N_tx = parseInt(document.getElementById('nTx').value);
-      const N_rx = parseInt(document.getElementById('nRx').value);
+
+      const p_spiral_tx = document.getElementById('pSpiralTx').value.split(',')
+        .map(x => parseFloat(x.trim()) * 1e-3);
+      const p_helix_tx = document.getElementById('pHelixTx').value.split(',')
+        .map(x => parseFloat(x.trim()) * 1e-3);
+      const N_spiral_tx = parseInt(document.getElementById('nSpiralTx').value);
+      const N_helix_tx  = parseInt(document.getElementById('nHelixTx').value);
+
+      const p_spiral_rx = document.getElementById('pSpiralRx').value.split(',')
+        .map(x => parseFloat(x.trim()) * 1e-3);
+      const p_helix_rx = document.getElementById('pHelixRx').value.split(',')
+        .map(x => parseFloat(x.trim()) * 1e-3);
+      const N_spiral_rx = parseInt(document.getElementById('nSpiralRx').value);
+      const N_helix_rx  = parseInt(document.getElementById('nHelixRx').value);
 
       let x_off = parseFloat(document.getElementById('xOffset').value) * 1e-2;
       let y_off = parseFloat(document.getElementById('yOffset').value) * 1e-2;
       let z_off = parseFloat(document.getElementById('zOffset').value) * 1e-2;
-      let phi = parseFloat(document.getElementById('phi').value) * Math.PI / 180;
+      let phi   = parseFloat(document.getElementById('phi').value) * Math.PI / 180;
       let theta = parseFloat(document.getElementById('theta').value) * Math.PI / 180;
 
       const sweepVar = document.getElementById('sweepVar').value;
@@ -849,30 +856,44 @@
         const b = -Math.cos(phi) * Math.sin(theta);
         const c = Math.cos(theta);
 
-        let Rp = new Array(N_tx);
-        let z_tx = new Array(N_tx);
-        for (let i = 0; i < N_tx; i++) {
-          const pitch_tx = (i < p_tx_array.length ? p_tx_array[i] : p_tx_array[p_tx_array.length - 1]);
-          Rp[i] = r_max_tx - i * pitch_tx;
-          z_tx[i] = 0;
+        const N_tx = N_spiral_tx * N_helix_tx;
+        let Rp_tx = new Array(N_tx);
+        let z_tx  = new Array(N_tx);
+        for (let i = 0; i < N_spiral_tx; i++) {
+          const pitch_s = (i < p_spiral_tx.length ? p_spiral_tx[i] : p_spiral_tx[p_spiral_tx.length - 1]);
+          const radius = r_max_tx - i * pitch_s;
+          for (let j = 0; j < N_helix_tx; j++) {
+            const idx = i * N_helix_tx + j;
+            const pitch_h = (j < p_helix_tx.length ? p_helix_tx[j] : p_helix_tx[p_helix_tx.length - 1]);
+            const zPos = j * pitch_h;
+            Rp_tx[idx] = radius;
+            z_tx[idx]  = zPos;
+          }
         }
 
-        let Rs = new Array(N_rx);
-        let z_rx = new Array(N_rx);
-        for (let j = 0; j < N_rx; j++) {
-          const pitch_rx = (j < p_rx_array.length ? p_rx_array[j] : p_rx_array[p_rx_array.length - 1]);
-          Rs[j] = r_max_rx - j * pitch_rx;
-          z_rx[j] = z_off;
+        const N_rx = N_spiral_rx * N_helix_rx;
+        let Rs_rx = new Array(N_rx);
+        let z_rx  = new Array(N_rx);
+        for (let i = 0; i < N_spiral_rx; i++) {
+          const pitch_s = (i < p_spiral_rx.length ? p_spiral_rx[i] : p_spiral_rx[p_spiral_rx.length - 1]);
+          const radius = r_max_rx - i * pitch_s;
+          for (let j = 0; j < N_helix_rx; j++) {
+            const idx = i * N_helix_rx + j;
+            const pitch_h = (j < p_helix_rx.length ? p_helix_rx[j] : p_helix_rx[p_helix_rx.length - 1]);
+            const zPos = z_off + j * pitch_h;
+            Rs_rx[idx] = radius;
+            z_rx[idx]  = zPos;
+          }
         }
 
         let Msum = 0;
         for (let i = 0; i < N_tx; i++) {
           for (let j = 0; j < N_rx; j++) {
             let zc = z_rx[j] - z_tx[i];
-            let Mij = Babic_24(Rp[i], Rs[j], [x_off, y_off, zc], [a, b, c]);
+            let Mij = Babic_24(Rp_tx[i], Rs_rx[j], [x_off, y_off, zc], [a, b, c]);
             if (!isFinite(Mij) || isNaN(Mij)) {
               zc += 1e-8;
-              Mij = Babic_24(Rp[i], Rs[j], [x_off, y_off, zc], [a, b, c]);
+              Mij = Babic_24(Rp_tx[i], Rs_rx[j], [x_off, y_off, zc], [a, b, c]);
               if (!isFinite(Mij) || isNaN(Mij)) {
                 Mij = 0;
               }
