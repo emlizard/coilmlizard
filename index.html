@@ -160,6 +160,120 @@
              </section>
 
     </main>
+    <!-- Section: Formulas & References -->
+    <div class="formulas">
+      <h2>Formulas Used</h2>
+      <div class="references">
+        References:<br />
+        1. S. Babic, F. Sirois, C. Akyel, C. Girardi, “Mutual Inductance Calculation Between Two Circular Loops Using 24-Point Gauss Quadrature,” <em>IEEE Trans. Magn.</em>, 2010.<br />
+        2. M. Kacenak, “Romberg Integration Algorithm,” Technical University of Kosice, 2001.
+      </div>
+
+      <h3>Normalized Parameters</h3>
+      \[
+      \alpha = \frac{R_s}{R_p}, 
+      \quad 
+      \beta = \frac{x_c}{R_p}, 
+      \quad 
+      \gamma = \frac{y_c}{R_p}, 
+      \quad 
+      \delta = \frac{z_c}{R_p}.
+      \]
+
+      <h3>Law of Cosines in Integrand</h3>
+      \[
+      A = 1 + e^2 + g^2 + h^2 + d^2 
+      + 2\,h\bigl(p_4 \cos p + p_5 \sin p\bigr),
+      \]
+      where 
+      \[
+      e = \beta,\quad 
+      g = \gamma,\quad 
+      h = \alpha,\quad 
+      d = \delta.
+      \]
+
+      <h3>Auxiliary Quantities</h3>
+      \[
+      l = \sqrt{a^2 + c^2}, 
+      \quad 
+      L = \sqrt{l^2 + b^2}, 
+      \]
+      \[
+      V = \sqrt{
+        (e^2 + g^2) 
+        + h^2\Bigl((1 - \tfrac{b^2 c^2}{l^2 L^2})\cos^2 p 
+        + \tfrac{c^2}{l^2}\sin^2 p 
+        + \tfrac{a b c}{l^2 L}\sin(2p)\Bigr) 
+        - 2\,\tfrac{h}{lL}(e a b - g l^2)\cos p 
+        - 2\,\tfrac{h e c}{l}\sin p 
+      }.
+      \]
+
+      <h3>Modulus for Elliptic Integrals</h3>
+      \[
+      m = \frac{4\,V}{\,A + 2\,V\,}, 
+      \quad 
+      k = \sqrt{m}.
+      \]
+      
+      <h3>Complete Elliptic Integrals</h3>
+      \[
+      K(m) = \int_0^{\frac{\pi}{2}} \frac{1}{\sqrt{1 - m \sin^2 \phi}}\;d\phi, 
+      \quad 
+      E(m) = \int_0^{\frac{\pi}{2}} \sqrt{1 - m \sin^2 \phi}\;d\phi.
+      \]
+
+      <h3>ψ-Function</h3>
+      \[
+      \Psi(m) = (2 - m)\,K(m) \;-\; 2\,E(m).
+      \]
+
+      <h3>Integrand f(p)</h3>
+      \[
+      f(p) = \bigl(p_1 \cos p + p_2 \sin p + p_3\bigr)\;
+      \frac{\Psi(m)}{\,k\,V^{1.5}\,},
+      \]
+      where 
+      \[
+      \begin{aligned}
+      p_1 &= \frac{g\,c}{l}, 
+      &\quad
+      p_2 &= -\frac{e\,l^2 + g\,a\,b}{l\,L}, 
+      &\quad
+      p_3 &= \frac{h\,c}{L}, \\[6pt]
+      p_4 &= \frac{g\,l^2 - e\,a\,b - d\,b\,c}{L}, 
+      &\quad
+      p_5 &= \frac{d\,a - e\,c}{l}.
+      \end{aligned}
+      \]
+
+      <h3>Romberg Integration (1D)</h3>
+      \[
+      \begin{aligned}
+      &\text{Let } \Delta = 2\pi,\quad 
+      \text{nodes } 0,\,\tfrac{2\pi}{2^{N-1}},\,2\tfrac{2\pi}{2^{N-1}},\,\dots,\,2\pi, 
+      \\[4pt]
+      &T_1 = \Delta\,\frac{f_0 + f_{2^{N-1}}}{2}, 
+      \qquad
+      T_{i} = \frac{T_{i-1} + \Delta\,\sum (\text{new midpoints})\,f}{2}, 
+      \\[4pt]
+      &R_{i,k} = \frac{4^k\,R_{i,k-1} \;-\; R_{i-1,k-1}}{4^k - 1}, 
+      \quad k=1,\ldots,i-1, 
+      \\[4pt]
+      &\text{Final: } \int_0^{2\pi} f(p)\,dp \approx R_{N,N-1}.
+      \end{aligned}
+      \]
+
+      <h3>Mutual Inductance</h3>
+      \[
+      M 
+      = \mu_0\,R_s \times (\text{Romberg integral}) 
+      = 4\times 10^{-7}\,R_s \times (\text{Romberg result}),
+      \]
+      with \(\mu_0 = 4\pi \times 10^{-7}\,\mathrm{H/m}.\)
+    </div>
+  </div>
 
     <script src="script.js"></script>
 </body>
