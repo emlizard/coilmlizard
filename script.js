@@ -1,403 +1,589 @@
-// --- 1. 핵심 계산 로직 (오류 수정된 버전) ---
-
-// Elliptic integrals via AGM algorithm (원본 코드로 복원)
-function ellipke(m) {
-    if (m === 1) return [Infinity, 1];
-    let a = 1.0;
-    let b = Math.sqrt(1 - m);
-    let sumE = 1 - m / 2;
-    let p = 1;
-    while (Math.abs(a - b) > 1e-15) {
+// Elliptic integrals via AGM algorithm
+    function ellipke(m) {
+      let a = 1.0;
+      let b = Math.sqrt(1 - m);
+      let sumE = 1 - m / 2;
+      let iter = 0;
+      while (Math.abs(a - b) > 1e-12 && iter < 50) {
         let an = (a + b) / 2.0;
         let bn = Math.sqrt(a * b);
         let cn = (a - b) / 2.0;
-        p *= 2;
-        sumE -= p * cn * cn / 2;
-        a = an;
-        b = bn;
+        sumE -= Math.pow(2, iter) * cn * cn;
+        a = an; b = bn;
+        iter++;
+      }
+      let K = Math.PI / (2 * a);
+      let E = K * sumE;
+      return [K, E];
     }
-    const K = Math.PI / (2 * a);
-    const E = K * sumE;
-    return [K, E];
-}
 
-// f24 integrand evaluation over array of p (원본 코드와 동일)
-function f24Array(pArr, alpha, beta, gamma, delta, a, b, c) {
-    const results = new Array(pArr.length);
-    const h = alpha, e = beta, g = gamma, d = delta;
-    const a2 = a * a, b2 = b * b, c2 = c * c;
-    const l2 = a2 + c2, l = Math.sqrt(l2);
-    const L2 = l2 + b2, L = Math.sqrt(L2);
-    const l2L2 = l2 * L2, lL = l * L;
+    // f24 integrand evaluation over array of p
+    function f24Array(pArr, alpha, beta, gamma, delta, a, b, c) {
+      const results = new Array(pArr.length);
+      const h = alpha, e = beta, g = gamma, d = delta;
+      const a2 = a * a, b2 = b * b, c2 = c * c;
+      const l2 = a2 + c2, l = Math.sqrt(l2);
+      const L2 = l2 + b2, L = Math.sqrt(L2);
+      const l2L2 = l2 * L2, lL = l * L;
 
-    for (let idx = 0; idx < pArr.length; idx++) {
+      for (let idx = 0; idx < pArr.length; idx++) {
         const p = pArr[idx];
         const sp = Math.sin(p), cp = Math.cos(p);
         let V, p1, p2, p3, p4, p5;
 
-        if (l < 1e-9) { // Prevent division by zero
-            p1 = 0;
-            p2 = -g * Math.sign(b);
-            p3 = 0;
-            p4 = -e * Math.sign(b);
-            p5 = d;
-            V = Math.sqrt(e*e + g*g + h*h*cp*cp - 2*h*e*Math.sign(b)*cp);
+        if (l === 0) {
+          p1 = 0;
+          p2 = -g * Math.sign(b);
+          p3 = 0;
+          p4 = -e * Math.sign(b);
+          p5 = d;
+          V = Math.sqrt(e*e + g*g + h*h*cp*cp - 2*h*e*Math.sign(b)*cp);
         } else {
-            p1 = (g * c) / l;
-            p2 = - (e * l2 + g * a * b) / (l * L);
-            p3 = (h * c) / L;
-            p4 = (g * l2 - e * a * b - d * b * c) / L;
-            p5 = (d * a - e * c) / l;
-            const term1 = e*e + g*g;
-            const term2 = h*h * ( (1 - (b2 * c2) / (l2L2)) * cp*cp + (c2 / l2) * sp*sp + (a * b * c) / (l2 * L) * Math.sin(2*p) );
-            const term3 = - (2 * h / (lL)) * (e * a * b - g * l2) * cp;
-            const term4 = - (2 * h * e * c / l) * sp;
-            V = Math.sqrt(Math.max(0, term1 + term2 + term3 + term4));
+          p1 = (g * c) / l;
+          p2 = - (e * l2 + g * a * b) / (l * L);
+          p3 = (h * c) / L;
+          p4 = (g * l2 - e * a * b - d * b * c) / L;
+          p5 = (d * a - e * c) / l;
+          const term1 = e*e + g*g;
+          const term2 = h*h * (
+            (1 - (b2 * c2) / (l2L2)) * cp*cp
+            + (c2 / l2) * sp*sp
+            + (a * b * c) / (l2 * L) * Math.sin(2*p)
+          );
+          const term3 = - (2 * h / (lL)) * (e * a * b - g * l2) * cp;
+          const term4 = - (2 * h * e * c / l) * sp;
+          V = Math.sqrt(term1 + term2 + term3 + term4);
         }
 
         const A = (1 + e*e + g*g + h*h + d*d) + 2*h*(p4 * cp + p5 * sp);
         const m = 4 * V / (A + 2 * V);
-        
-        if (m > 1 || m < 0 || !isFinite(m)) {
-            results[idx] = 0;
-            continue;
-        }
-
         const k = Math.sqrt(m);
         const [Kval, Eval] = ellipke(m);
         const PSI = (2 - m) * Kval - 2 * Eval;
-        
-        if (!isFinite(k) || k < 1e-9 || !isFinite(V) || V < 1e-9) {
-             results[idx] = 0;
-        } else {
-             results[idx] = (p1 * cp + p2 * sp + p3) * (PSI / (k * Math.pow(V, 1.5)));
-        }
+        results[idx] = (p1 * cp + p2 * sp + p3) * (PSI / (k * Math.pow(V, 1.5)));
+      }
+      return results;
     }
-    return results;
-}
 
-// Babic_24 mutual inductance calculation (원본 코드와 동일)
-function Babic_24(Rp, Rs, pc, n, tol = 1e-12) {
-    const xc = pc[0] / Rp, yc = pc[1] / Rp, zc = pc[2] / Rp;
-    const a = n[0], b = n[1], c = n[2];
-    const alpha = Rs / Rp, beta = xc, gamma = yc, delta = zc;
+    // Babic_24 mutual inductance calculation
+    function Babic_24(Rp, Rs, pc, n, tol = 1e-13) {
+      const xc = pc[0] / Rp, yc = pc[1] / Rp, zc = pc[2] / Rp;
+      const a = n[0], b = n[1], c = n[2];
+      const alpha = Rs / Rp, beta = xc, gamma = yc, delta = zc;
 
-    const decdigs = Math.max(8, Math.abs(Math.floor(Math.log10(tol))));
-    const nPts = Math.pow(2, decdigs - 1) + 1;
-    const pArr = Array.from({length: nPts}, (_, i) => (2 * Math.PI) * i / (nPts - 1));
-    
-    const romall = f24Array(pArr, alpha, beta, gamma, delta, a, b, c);
+      const decdigs = Math.abs(Math.floor(Math.log10(tol)));
+      const nPts = Math.pow(2, decdigs - 1) + 1;
+      const pArr = new Array(nPts);
+      for (let i = 0; i < nPts; i++) {
+        pArr[i] = (2 * Math.PI) * i / (nPts - 1);
+      }
+      const romall = f24Array(pArr, alpha, beta, gamma, delta, a, b, c);
 
-    let romPrev = new Array(decdigs).fill(0);
-    let romCurr = new Array(decdigs).fill(0);
+      let romPrev = new Array(decdigs).fill(0);
+      let romCurr = new Array(decdigs).fill(0);
 
-    let h = 2 * Math.PI;
-    romPrev[0] = h * (romall[0] + romall[nPts - 1]) / 2;
+      let h = 2 * Math.PI;
+      romPrev[0] = h * (romall[0] + romall[nPts - 1]) / 2;
 
-    for (let i = 2; i <= decdigs; i++) {
+      for (let i = 2; i <= decdigs; i++) {
         const step = Math.pow(2, decdigs - i + 1);
         let sumNew = 0;
         for (let j = step / 2; j < nPts - 1; j += step) {
-            sumNew += romall[j];
+          sumNew += romall[j];
         }
         romCurr[0] = (romPrev[0] + h * sumNew) / 2;
         for (let k = 1; k < i; k++) {
-            const factor = Math.pow(4, k);
-            romCurr[k] = (factor * romCurr[k - 1] - romPrev[k - 1]) / (factor - 1);
+          const factor = Math.pow(4, k);
+          romCurr[k] = (factor * romCurr[k - 1] - romPrev[k - 1]) / (factor - 1);
         }
-        romPrev = [...romCurr];
+        for (let k = 0; k < i; k++) {
+          romPrev[k] = romCurr[k];
+        }
         h /= 2;
+      }
+
+      const integralVal = romPrev[decdigs - 1];
+      const mu0 = 4 * Math.PI * 1e-7;
+      return mu0 * Rs * integralVal;
     }
 
-    const integralVal = romPrev[decdigs - 1];
-    const mu0 = 4 * Math.PI * 1e-7;
-    return mu0 * Rs * integralVal;
-}
+    // Three.js vars
+    let scene, camera, renderer, controls, coilGroup;
+    let txMeshes = [];
+    let rxMeshes = [];
 
+    function initThree() {
+      const container = document.getElementById('coilVis');
 
-// --- 2. UI 및 시각화 로직 (오류 수정 및 개선) ---
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0xf7f9fa);
+      scene.up.set(0, 0, 1);
 
-// 전역 변수
-let scene, camera, renderer, controls, coilGroup, sweepChartInstance;
-let sweepLabels = [], sweepValues = [];
+      camera = new THREE.PerspectiveCamera(
+        60,
+        container.clientWidth / container.clientHeight,
+        0.1,
+        1000
+      );
+      camera.up.set(0, 0, 1);
+      camera.position.set(15, 15, 15);
+      camera.lookAt(0, 0, 0);
 
-// DOM 로드 시 초기화
-document.addEventListener('DOMContentLoaded', () => {
-    initTheme();
-    initThree();
-    initChart();
-    
-    document.getElementById('calculateBtn').addEventListener('click', calculateAndDisplay);
-    document.getElementById('plotBtn').addEventListener('click', plotSweepGraph);
-    document.getElementById('saveDataBtn').addEventListener('click', saveSweepData);
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(container.clientWidth, container.clientHeight);
+      container.appendChild(renderer.domElement);
 
-    calculateAndDisplay(); // 초기 로드 시 계산 및 3D 뷰 생성
-});
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.1;
+      controls.screenSpacePanning = false;
+      controls.minDistance = 2;
+      controls.maxDistance = 200;
 
-// 테마 초기화 및 동기화 로직
-function initTheme() {
-    const themeToggleBtn = document.getElementById('theme-toggle-btn');
-    const sunIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`;
-    const moonIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+      const ambientLight = new THREE.AmbientLight(0xaaaaaa, 0.6);
+      scene.add(ambientLight);
+      const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
+      dirLight.position.set(20, 20, 20);
+      scene.add(dirLight);
 
-    const applyTheme = (theme) => {
-        document.documentElement.setAttribute('data-theme', theme);
-        themeToggleBtn.innerHTML = theme === 'light' ? moonIcon : sunIcon;
-        localStorage.setItem('theme', theme);
-        updateVisualsTheme();
-    };
+      const axisLength = 5;
+      const arrowThickness = 0.2;
+      const arrowX = new THREE.ArrowHelper(
+        new THREE.Vector3(1, 0, 0),
+        new THREE.Vector3(0, 0, 0),
+        axisLength,
+        0xff0000,
+        arrowThickness,
+        arrowThickness * 0.5
+      );
+      scene.add(arrowX);
 
-    themeToggleBtn.addEventListener('click', () => {
-        const newTheme = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
-        applyTheme(newTheme);
-    });
-    
-    const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-    applyTheme(savedTheme);
-}
+      const arrowY = new THREE.ArrowHelper(
+        new THREE.Vector3(0, 1, 0),
+        new THREE.Vector3(0, 0, 0),
+        axisLength,
+        0x00ff00,
+        arrowThickness,
+        arrowThickness * 0.5
+      );
+      scene.add(arrowY);
 
-function updateVisualsTheme() {
-    const styles = getComputedStyle(document.documentElement);
-    const surfaceColor = styles.getPropertyValue('--surface').trim();
-    const textColor = styles.getPropertyValue('--text-primary').trim();
-    const accentColor = styles.getPropertyValue('--accent').trim();
-    const borderColor = styles.getPropertyValue('--border').trim();
+      const arrowZ = new THREE.ArrowHelper(
+        new THREE.Vector3(0, 0, 1),
+        new THREE.Vector3(0, 0, 0),
+        axisLength,
+        0x0000ff,
+        arrowThickness,
+        arrowThickness * 0.5
+      );
+      scene.add(arrowZ);
 
-    if (scene) scene.background = new THREE.Color(surfaceColor);
-    if (sweepChartInstance) {
-        Object.assign(sweepChartInstance.options.scales.x.ticks, { color: textColor });
-        Object.assign(sweepChartInstance.options.scales.y.ticks, { color: textColor });
-        Object.assign(sweepChartInstance.options.scales.x.title, { color: textColor });
-        Object.assign(sweepChartInstance.options.scales.y.title, { color: textColor });
-        Object.assign(sweepChartInstance.options.plugins.legend.labels, { color: textColor });
-        Object.assign(sweepChartInstance.options.scales.x.grid, { color: borderColor });
-        Object.assign(sweepChartInstance.options.scales.y.grid, { color: borderColor });
-        Object.assign(sweepChartInstance.data.datasets[0], { borderColor: accentColor, backgroundColor: accentColor + '33' });
-        sweepChartInstance.update();
+      addAxisLabels(axisLength);
+
+      coilGroup = new THREE.Group();
+      scene.add(coilGroup);
+
+      window.addEventListener('resize', onWindowResize);
+      animateThree();
     }
-}
 
-// 3D 시각화 (Three.js)
-function initThree() {
-    const container = document.getElementById('coilVis');
-    scene = new THREE.Scene();
-    scene.up.set(0, 0, 1);
+    function addAxisLabels(length) {
+      function makeTextSprite(text, colorHex) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 128;
+        canvas.height = 128;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = colorHex;
+        ctx.font = 'Bold 64px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, 64, 64);
+        const texture = new THREE.CanvasTexture(canvas);
+        const material = new THREE.SpriteMaterial({ map: texture, depthTest: false });
+        const sprite = new THREE.Sprite(material);
+        sprite.scale.set(1.5, 1.5, 1.5);
+        return sprite;
+      }
 
-    camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 1000);
-    camera.position.set(20, -20, 20);
-    camera.lookAt(0, 0, 0);
+      const xLabel = makeTextSprite('X', '#ff0000');
+      xLabel.position.set(length + 1, 0, 0);
+      scene.add(xLabel);
 
-    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(container.clientWidth, container.clientHeight);
-    container.appendChild(renderer.domElement);
+      const yLabel = makeTextSprite('Y', '#00ff00');
+      yLabel.position.set(0, length + 1, 0);
+      scene.add(yLabel);
 
-    controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-
-    scene.add(new THREE.AmbientLight(0xffffff, 0.7));
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.5);
-    dirLight.position.set(30, -30, 50);
-    scene.add(dirLight);
-
-    const axesHelper = new THREE.AxesHelper(10);
-    scene.add(axesHelper);
-
-    coilGroup = new THREE.Group();
-    scene.add(coilGroup);
-
-    window.addEventListener('resize', onWindowResize);
-    animateThree();
-}
-
-function onWindowResize() {
-    const container = document.getElementById('coilVis');
-    if (container.clientWidth > 0) {
-        camera.aspect = container.clientWidth / container.clientHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(container.clientWidth, container.clientHeight);
+      const zLabel = makeTextSprite('Z', '#0000ff');
+      zLabel.position.set(0, 0, length + 1);
+      scene.add(zLabel);
     }
-}
 
-function animateThree() {
-    requestAnimationFrame(animateThree);
-    controls.update();
-    renderer.render(scene, camera);
-}
+    function onWindowResize() {
+      const container = document.getElementById('coilVis');
+      camera.aspect = container.clientWidth / container.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(container.clientWidth, container.clientHeight);
+    }
 
-function updateCoilVisuals() {
-    while(coilGroup.children.length) coilGroup.remove(coilGroup.children[0]);
+    function animateThree() {
+      requestAnimationFrame(animateThree);
+      controls.update();
+      renderer.render(scene, camera);
+    }
 
-    const inputs = getInputs();
-    const tubeRadius = 0.1;
+    function updateCoilVisuals() {
+      txMeshes.forEach(m => {
+        coilGroup.remove(m);
+        m.geometry.dispose();
+        m.material.dispose();
+      });
+      rxMeshes.forEach(m => {
+        coilGroup.remove(m);
+        m.geometry.dispose();
+        m.material.dispose();
+      });
+      txMeshes = [];
+      rxMeshes = [];
 
-    const createCoil = (params, isTx) => {
-        const { r_max_cm, N_spiral, p_spiral_cm, N_helix, p_helix_cm } = params;
-        const group = new THREE.Group();
-        
-        for (let i = 0; i < N_spiral; i++) {
-            const radius = r_max_cm - p_spiral_cm.slice(0, i).reduce((a, b) => a + b, 0);
-            if (radius <= 0) continue;
-            for (let j = 0; j < N_helix; j++) {
-                const zPos = p_helix_cm.slice(0, j).reduce((a, b) => a + b, 0);
-                const geom = new THREE.TorusGeometry(radius, tubeRadius, 16, 100);
-                const mat = new THREE.MeshStandardMaterial({ color: isTx ? 0x2563eb : 0xef4444, metalness: 0.5, roughness: 0.5 });
-                const mesh = new THREE.Mesh(geom, mat);
-                mesh.position.z = zPos;
-                group.add(mesh);
+      const r_max_tx_cm = parseFloat(document.getElementById('rmaxTx').value);
+      const r_max_rx_cm = parseFloat(document.getElementById('rmaxRx').value);
+      const x_off_cm = parseFloat(document.getElementById('xOffset').value);
+      const y_off_cm = parseFloat(document.getElementById('yOffset').value);
+      const z_off_cm = parseFloat(document.getElementById('zOffset').value);
+      const phiDeg = parseFloat(document.getElementById('phi').value);
+      const thetaDeg = parseFloat(document.getElementById('theta').value);
+
+      const phiRad = THREE.MathUtils.degToRad(phiDeg);
+      const thetaRad = THREE.MathUtils.degToRad(thetaDeg);
+
+      const N_spiral_tx = parseInt(document.getElementById('nSpiralTx').value);
+      const N_helix_tx  = parseInt(document.getElementById('nHelixTx').value);
+      const p_spiral_tx = document.getElementById('pSpiralTx').value
+        .split(',').map(x => parseFloat(x.trim()) * 1e-1);
+      const p_helix_tx  = document.getElementById('pHelixTx').value
+        .split(',').map(x => parseFloat(x.trim()) * 1e-1);
+
+      const N_spiral_rx = parseInt(document.getElementById('nSpiralRx').value);
+      const N_helix_rx  = parseInt(document.getElementById('nHelixRx').value);
+      const p_spiral_rx = document.getElementById('pSpiralRx').value
+        .split(',').map(x => parseFloat(x.trim()) * 1e-1);
+      const p_helix_rx  = document.getElementById('pHelixRx').value
+        .split(',').map(x => parseFloat(x.trim()) * 1e-1);
+
+      const nx = Math.sin(thetaRad) * Math.cos(phiRad);
+      const ny = Math.sin(thetaRad) * Math.sin(phiRad);
+      const nz = Math.cos(thetaRad);
+      const nVec = new THREE.Vector3(nx, ny, nz).normalize();
+      const quat = new THREE.Quaternion();
+      quat.setFromUnitVectors(new THREE.Vector3(0, 0, 1), nVec);
+
+      const tubeRadius = 0.05;
+
+      // Transmitter: draw 모든 loop
+      for (let i = 0; i < N_spiral_tx; i++) {
+        const pitch_s_tx = (i < p_spiral_tx.length ? p_spiral_tx[i] : p_spiral_tx[p_spiral_tx.length - 1]);
+        const radius = r_max_tx_cm - i * pitch_s_tx;
+        for (let j = 0; j < N_helix_tx; j++) {
+          const pitch_h_tx = (j < p_helix_tx.length ? p_helix_tx[j] : p_helix_tx[p_helix_tx.length - 1]);
+          const zPos = j * pitch_h_tx;
+          const geom = new THREE.TorusGeometry(radius, tubeRadius, 16, 128);
+          const mat = new THREE.MeshPhongMaterial({
+            color: 0x0077ff,
+            shininess: 80,
+            opacity: 0.7,
+            transparent: true
+          });
+          const mesh = new THREE.Mesh(geom, mat);
+          mesh.position.set(0, 0, zPos);
+          coilGroup.add(mesh);
+          txMeshes.push(mesh);
+        }
+      }
+
+      // Receiver: draw 모든 loop
+      for (let i = 0; i < N_spiral_rx; i++) {
+        const pitch_s_rx = (i < p_spiral_rx.length ? p_spiral_rx[i] : p_spiral_rx[p_spiral_rx.length - 1]);
+        const radius = r_max_rx_cm - i * pitch_s_rx;
+        for (let j = 0; j < N_helix_rx; j++) {
+          const pitch_h_rx = (j < p_helix_rx.length ? p_helix_rx[j] : p_helix_rx[p_helix_rx.length - 1]);
+          const zPos = z_off_cm + j * pitch_h_rx;
+          const geom = new THREE.TorusGeometry(radius, tubeRadius, 16, 128);
+          const mat = new THREE.MeshPhongMaterial({
+            color: 0xff3333,
+            shininess: 80,
+            opacity: 0.7,
+            transparent: true
+          });
+          const mesh = new THREE.Mesh(geom, mat);
+          mesh.setRotationFromQuaternion(quat);
+          mesh.position.set(x_off_cm, y_off_cm, zPos);
+          coilGroup.add(mesh);
+          rxMeshes.push(mesh);
+        }
+      }
+    }
+
+    // Sweep Data 저장용
+    let sweepLabels = [];
+    let sweepValues = [];
+
+    function calculateMutualInductance() {
+      const r_max_tx = parseFloat(document.getElementById('rmaxTx').value) * 1e-2;
+      const r_max_rx = parseFloat(document.getElementById('rmaxRx').value) * 1e-2;
+
+      const p_spiral_tx = document.getElementById('pSpiralTx').value.split(',')
+        .map(x => parseFloat(x.trim()) * 1e-3);
+      const p_helix_tx = document.getElementById('pHelixTx').value.split(',')
+        .map(x => parseFloat(x.trim()) * 1e-3);
+      const N_spiral_tx = parseInt(document.getElementById('nSpiralTx').value);
+      const N_helix_tx  = parseInt(document.getElementById('nHelixTx').value);
+
+      const p_spiral_rx = document.getElementById('pSpiralRx').value.split(',')
+        .map(x => parseFloat(x.trim()) * 1e-3);
+      const p_helix_rx = document.getElementById('pHelixRx').value.split(',')
+        .map(x => parseFloat(x.trim()) * 1e-3);
+      const N_spiral_rx = parseInt(document.getElementById('nSpiralRx').value);
+      const N_helix_rx  = parseInt(document.getElementById('nHelixRx').value);
+
+      let x_off = parseFloat(document.getElementById('xOffset').value) * 1e-2;
+      let y_off = parseFloat(document.getElementById('yOffset').value) * 1e-2;
+      let z_off = parseFloat(document.getElementById('zOffset').value) * 1e-2;
+
+      let phi   = parseFloat(document.getElementById('phi').value) * Math.PI / 180;
+      let theta = parseFloat(document.getElementById('theta').value) * Math.PI / 180;
+
+      const a = Math.sin(phi) * Math.sin(theta);
+      const b = -Math.cos(phi) * Math.sin(theta);
+      const c = Math.cos(theta);
+
+      const N_tx = N_spiral_tx * N_helix_tx;
+      let Rp_tx = new Array(N_tx);
+      let z_tx  = new Array(N_tx);
+      for (let i = 0; i < N_spiral_tx; i++) {
+        const pitch_s = (i < p_spiral_tx.length ? p_spiral_tx[i] : p_spiral_tx[p_spiral_tx.length - 1]);
+        const radius = r_max_tx - i * pitch_s;
+        for (let j = 0; j < N_helix_tx; j++) {
+          const idx = i * N_helix_tx + j;
+          const pitch_h = (j < p_helix_tx.length ? p_helix_tx[j] : p_helix_tx[p_helix_tx.length - 1]);
+          const zPos = j * pitch_h;
+          Rp_tx[idx] = radius;
+          z_tx[idx]  = zPos;
+        }
+      }
+
+      const N_rx = N_spiral_rx * N_helix_rx;
+      let Rs_rx = new Array(N_rx);
+      let z_rx  = new Array(N_rx);
+      for (let i = 0; i < N_spiral_rx; i++) {
+        const pitch_s = (i < p_spiral_rx.length ? p_spiral_rx[i] : p_spiral_rx[p_spiral_rx.length - 1]);
+        const radius = r_max_rx - i * pitch_s;
+        for (let j = 0; j < N_helix_rx; j++) {
+          const idx = i * N_helix_rx + j;
+          const pitch_h = (j < p_helix_rx.length ? p_helix_rx[j] : p_helix_rx[p_helix_rx.length - 1]);
+          const zPos = z_off + j * pitch_h;
+          Rs_rx[idx] = radius;
+          z_rx[idx]  = zPos;
+        }
+      }
+
+      let Msum = 0;
+      for (let i = 0; i < N_tx; i++) {
+        for (let j = 0; j < N_rx; j++) {
+          let zc = z_rx[j] - z_tx[i];
+          let Mij = Babic_24(Rp_tx[i], Rs_rx[j], [x_off, y_off, zc], [a, b, c]);
+          if (!isFinite(Mij) || isNaN(Mij)) {
+            zc += 1e-8;
+            Mij = Babic_24(Rp_tx[i], Rs_rx[j], [x_off, y_off, zc], [a, b, c]);
+            if (!isFinite(Mij) || isNaN(Mij)) {
+              Mij = 0;
             }
+          }
+          Msum += Mij;
         }
-        return group;
-    };
+      }
 
-    const txCoil = createCoil({ r_max_cm: inputs.r_max_tx_cm, N_spiral: inputs.N_spiral_tx, p_spiral_cm: inputs.p_spiral_tx_cm, N_helix: inputs.N_helix_tx, p_helix_cm: inputs.p_helix_tx_cm }, true);
-    coilGroup.add(txCoil);
+      const M_uH = Msum * 1e6;
+      document.getElementById('result').innerHTML =
+        `<p><strong>Mutual Inductance M:</strong> ${M_uH.toFixed(6)} μH</p>`;
 
-    const rxCoil = createCoil({ r_max_cm: inputs.r_max_rx_cm, N_spiral: inputs.N_spiral_rx, p_spiral_cm: inputs.p_spiral_rx_cm, N_helix: inputs.N_helix_rx, p_helix_cm: inputs.p_helix_rx_cm }, false);
-    
-    // ✅ 3D 위치/방향 로직 수정 (원본 기반)
-    const normal = new THREE.Vector3(Math.sin(inputs.theta) * Math.cos(inputs.phi), Math.sin(inputs.theta) * Math.sin(inputs.phi), Math.cos(inputs.theta));
-    rxCoil.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal);
-    rxCoil.position.set(inputs.x_off_cm, inputs.y_off_cm, inputs.z_off_cm);
-    coilGroup.add(rxCoil);
-}
-
-
-// 차트 (Chart.js)
-function initChart() {
-    const ctx = document.getElementById('sweepChart').getContext('2d');
-    sweepChartInstance = new Chart(ctx, {
-        type: 'line', data: { labels: [], datasets: [{ data: [] }] },
-        options: {
-            responsive: true, maintainAspectRatio: false,
-            scales: { x: { title: { display: true } }, y: { title: { display: true, text: 'Mutual Inductance (μH)' } } },
-            plugins: { legend: { display: false } }
-        }
-    });
-}
-
-// 계산 및 플로팅
-function getInputs(overrideParams = {}) {
-    const getParam = (id, isInt = false, isDeg = false) => {
-        const val = parseFloat(document.getElementById(id).value);
-        if (isInt) return parseInt(val);
-        if (isDeg) return val * Math.PI / 180;
-        return val;
-    };
-    const getPitch = (id) => document.getElementById(id).value.split(',').map(x => parseFloat(x.trim()));
-
-    const params = {
-        r_max_tx_cm: getParam('rmaxTx'), N_spiral_tx: getParam('nSpiralTx', true), p_spiral_tx_mm: getPitch('pSpiralTx'),
-        N_helix_tx: getParam('nHelixTx', true), p_helix_tx_mm: getPitch('pHelixTx'),
-        
-        r_max_rx_cm: getParam('rmaxRx'), N_spiral_rx: getParam('nSpiralRx', true), p_spiral_rx_mm: getPitch('pSpiralRx'),
-        N_helix_rx: getParam('nHelixRx', true), p_helix_rx_mm: getPitch('pHelixRx'),
-        
-        x_off_cm: getParam('xOffset'), y_off_cm: getParam('yOffset'), z_off_cm: getParam('zOffset'),
-        phi: getParam('phi', false, true), theta: getParam('theta', false, true),
-        ...overrideParams
-    };
-    return params;
-}
-
-function calculateMutualInductance(params) {
-    const { r_max_tx_cm, N_spiral_tx, p_spiral_tx_mm, N_helix_tx, p_helix_tx_mm, r_max_rx_cm, N_spiral_rx, p_spiral_rx_mm, N_helix_rx, p_helix_rx_mm, x_off_cm, y_off_cm, z_off_cm, phi, theta } = params;
-
-    // ✅ 방향 벡터 계산식 수정 (원본 기반)
-    const a = Math.sin(phi) * Math.sin(theta);
-    const b = -Math.cos(phi) * Math.sin(theta);
-    const c = Math.cos(theta);
-    const n = [a, b, c];
-
-    const createLoops = (r_max, Ns, ps, Nh, ph) => {
-        const loops = [];
-        for (let i = 0; i < Ns; i++) {
-            const radius = (r_max - ps.slice(0, i).reduce((acc, val) => acc + val, 0) * 0.1) * 1e-2;
-            for (let j = 0; j < Nh; j++) {
-                const zPos = (ph.slice(0, j).reduce((acc, val) => acc + val, 0) * 0.1) * 1e-2;
-                if(radius > 1e-9) loops.push({ r: radius, z: zPos });
-            }
-        }
-        return loops;
-    };
-
-    const tx_loops = createLoops(r_max_tx_cm, N_spiral_tx, p_spiral_tx_mm, N_helix_tx, p_helix_tx_mm);
-    const rx_loops = createLoops(r_max_rx_cm, N_spiral_rx, p_spiral_rx_mm, N_helix_rx, p_helix_rx_mm);
-    
-    let Msum = 0;
-    const pc_base = [x_off_cm * 1e-2, y_off_cm * 1e-2, z_off_cm * 1e-2];
-    
-    for (const tx of tx_loops) {
-        for (const rx of rx_loops) {
-            const pc = [pc_base[0], pc_base[1], pc_base[2] + rx.z - tx.z];
-            let Mij = Babic_24(tx.r, rx.r, pc, n);
-            if (!isFinite(Mij)) Mij = 0;
-            Msum += Mij;
-        }
-    }
-    return Msum * 1e6; // to μH
-}
-
-function calculateAndDisplay() {
-    const M_uH = calculateMutualInductance(getInputs());
-    document.getElementById('result').innerHTML = `<div class="result-item" style="padding: 1rem;"><div class="result-label">Mutual Inductance (M)</div><div class="result-value" style="font-size: 1.5rem;">${M_uH.toFixed(6)} μH</div></div>`;
-    updateCoilVisuals();
-}
-
-async function plotSweepGraph() {
-    const plotBtn = document.getElementById('plotBtn');
-    if (plotBtn.disabled) return;
-    plotBtn.disabled = true;
-    plotBtn.classList.add('calculating');
-    
-    const progressDiv = document.getElementById('progress');
-    const sweepVar = document.getElementById('sweepVar').value;
-    const sweepMin = parseFloat(document.getElementById('sweepMin').value);
-    const sweepMax = parseFloat(document.getElementById('sweepMax').value);
-    const sweepStep = parseFloat(document.getElementById('sweepStep').value);
-
-    const points = [];
-    if (sweepStep > 0) {
-        for (let v = sweepMin; v <= sweepMax + 1e-9; v += sweepStep) points.push(v);
+      updateCoilVisuals();
     }
 
-    sweepLabels = [];
-    sweepValues = [];
+    // Async version for incremental chart updates
+    async function plotSweepGraph() {
+      const progressDiv = document.getElementById('progress');
+      progressDiv.textContent = 'Progress: 0%';
 
-    for (let k = 0; k < points.length; k++) {
+      const r_max_tx = parseFloat(document.getElementById('rmaxTx').value) * 1e-2;
+      const r_max_rx = parseFloat(document.getElementById('rmaxRx').value) * 1e-2;
+
+      const p_spiral_tx = document.getElementById('pSpiralTx').value.split(',')
+        .map(x => parseFloat(x.trim()) * 1e-3);
+      const p_helix_tx = document.getElementById('pHelixTx').value.split(',')
+        .map(x => parseFloat(x.trim()) * 1e-3);
+      const N_spiral_tx = parseInt(document.getElementById('nSpiralTx').value);
+      const N_helix_tx  = parseInt(document.getElementById('nHelixTx').value);
+
+      const p_spiral_rx = document.getElementById('pSpiralRx').value.split(',')
+        .map(x => parseFloat(x.trim()) * 1e-3);
+      const p_helix_rx = document.getElementById('pHelixRx').value.split(',')
+        .map(x => parseFloat(x.trim()) * 1e-3);
+      const N_spiral_rx = parseInt(document.getElementById('nSpiralRx').value);
+      const N_helix_rx  = parseInt(document.getElementById('nHelixRx').value);
+
+      let x_off = parseFloat(document.getElementById('xOffset').value) * 1e-2;
+      let y_off = parseFloat(document.getElementById('yOffset').value) * 1e-2;
+      let z_off = parseFloat(document.getElementById('zOffset').value) * 1e-2;
+      let phi   = parseFloat(document.getElementById('phi').value) * Math.PI / 180;
+      let theta = parseFloat(document.getElementById('theta').value) * Math.PI / 180;
+
+      const sweepVar = document.getElementById('sweepVar').value;
+      const sweepMin = parseFloat(document.getElementById('sweepMin').value);
+      const sweepMax = parseFloat(document.getElementById('sweepMax').value);
+      const sweepStep = parseFloat(document.getElementById('sweepStep').value);
+
+      const points = [];
+      for (let v = sweepMin; v <= sweepMax + 1e-12; v += sweepStep) {
+        points.push(parseFloat(v.toFixed(6)));
+      }
+
+      // 초기화: 차트 데이터 비우기
+      sweepLabels = [];
+      sweepValues = [];
+      window.sweepChartInstance.data.labels = [];
+      window.sweepChartInstance.data.datasets[0].data = [];
+      window.sweepChartInstance.update();
+
+      for (let k = 0; k < points.length; k++) {
+        // 진행률 업데이트
         const percent = Math.round(((k + 1) / points.length) * 100);
-        progressDiv.textContent = `Calculating... ${percent}%`;
-        
-        let override = {};
-        const val = points[k];
-        if (sweepVar.length < 3) override[`${sweepVar}_off_cm`] = val;
-        else override[sweepVar] = val * Math.PI / 180;
+        progressDiv.textContent = `Progress: ${percent}%`;
 
-        const Mval = calculateMutualInductance(getInputs(override));
-        sweepLabels.push(val.toFixed(2));
-        sweepValues.push(Mval);
-
-        if (k % 5 === 0 || k === points.length - 1) {
-            sweepChartInstance.data.labels = sweepLabels;
-            sweepChartInstance.data.datasets[0].data = sweepValues;
-            sweepChartInstance.options.scales.x.title.text = `${sweepVar} (${sweepVar.length > 2 ? 'deg' : 'cm'})`;
-            sweepChartInstance.update('none');
+        switch (sweepVar) {
+          case 'x': x_off = points[k] * 1e-2; break;
+          case 'y': y_off = points[k] * 1e-2; break;
+          case 'z': z_off = points[k] * 1e-2; break;
+          case 'phi': phi = points[k] * Math.PI / 180; break;
+          case 'theta': theta = points[k] * Math.PI / 180; break;
         }
+        const a = Math.sin(phi) * Math.sin(theta);
+        const b = -Math.cos(phi) * Math.sin(theta);
+        const c = Math.cos(theta);
+
+        // Tx 배열
+        const N_tx = N_spiral_tx * N_helix_tx;
+        let Rp_tx = new Array(N_tx);
+        let z_tx  = new Array(N_tx);
+        for (let i = 0; i < N_spiral_tx; i++) {
+          const pitch_s = (i < p_spiral_tx.length ? p_spiral_tx[i] : p_spiral_tx[p_spiral_tx.length - 1]);
+          const radius = r_max_tx - i * pitch_s;
+          for (let j = 0; j < N_helix_tx; j++) {
+            const idx = i * N_helix_tx + j;
+            const pitch_h = (j < p_helix_tx.length ? p_helix_tx[j] : p_helix_tx[p_helix_tx.length - 1]);
+            const zPos = j * pitch_h;
+            Rp_tx[idx] = radius;
+            z_tx[idx]  = zPos;
+          }
+        }
+
+        // Rx 배열
+        const N_rx = N_spiral_rx * N_helix_rx;
+        let Rs_rx = new Array(N_rx);
+        let z_rx  = new Array(N_rx);
+        for (let i = 0; i < N_spiral_rx; i++) {
+          const pitch_s = (i < p_spiral_rx.length ? p_spiral_rx[i] : p_spiral_rx[p_spiral_rx.length - 1]);
+          const radius = r_max_rx - i * pitch_s;
+          for (let j = 0; j < N_helix_rx; j++) {
+            const idx = i * N_helix_rx + j;
+            const pitch_h = (j < p_helix_rx.length ? p_helix_rx[j] : p_helix_rx[p_helix_rx.length - 1]);
+            const zPos = z_off + j * pitch_h;
+            Rs_rx[idx] = radius;
+            z_rx[idx]  = zPos;
+          }
+        }
+
+        // Msum 계산
+        let Msum = 0;
+        for (let i = 0; i < N_tx; i++) {
+          for (let j = 0; j < N_rx; j++) {
+            let zc = z_rx[j] - z_tx[i];
+            let Mij = Babic_24(Rp_tx[i], Rs_rx[j], [x_off, y_off, zc], [a, b, c]);
+            if (!isFinite(Mij) || isNaN(Mij)) {
+              zc += 1e-8;
+              Mij = Babic_24(Rp_tx[i], Rs_rx[j], [x_off, y_off, zc], [a, b, c]);
+              if (!isFinite(Mij) || isNaN(Mij)) {
+                Mij = 0;
+              }
+            }
+            Msum += Mij;
+          }
+        }
+        const Mval = Msum * 1e6;
+
+        // 차트 업데이트: 레이블, 데이터 추가
+        sweepLabels.push(points[k].toFixed(3));
+        sweepValues.push(Mval);
+        window.sweepChartInstance.data.labels = sweepLabels.slice();
+        window.sweepChartInstance.data.datasets[0].data = sweepValues.slice();
+        window.sweepChartInstance.update();
+
+        // 짧게 대기해서 UI가 갱신될 시간 확보
         await new Promise(resolve => setTimeout(resolve, 0));
+      }
+
+      // 완료되면 진행률 표시 제거
+      progressDiv.textContent = '';
     }
 
-    progressDiv.textContent = 'Plotting complete.';
-    plotBtn.disabled = false;
-    plotBtn.classList.remove('calculating');
-}
+    function saveSweepData() {
+      if (!sweepLabels.length) {
+        alert('No sweep data to save. Please plot first.');
+        return;
+      }
+      const lines = [['Variable', 'M(μH)']];
+      for (let i = 0; i < sweepLabels.length; i++) {
+        lines.push([sweepLabels[i], sweepValues[i].toFixed(6)]);
+      }
+      const csvContent = lines.map(e => e.join(' ')).join('\n');
+      const blob = new Blob([csvContent], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `sweep_data.txt`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
 
-function saveSweepData() {
-    if (!sweepLabels.length) return alert('No data to save.');
-    const header = `${document.getElementById('sweepVar').value}, M_uH\n`;
-    const csvContent = header + sweepLabels.map((label, i) => `${label},${sweepValues[i].toFixed(8)}`).join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = "sweep_data.csv";
-    link.click();
-    URL.revokeObjectURL(link.href);
-}
+    window.addEventListener('load', () => {
+      initThree();
+      const ctx = document.getElementById('sweepChart').getContext('2d');
+      window.sweepChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [{
+            label: '',
+            data: [],
+            borderColor: '#1abc9c',
+            backgroundColor: 'rgba(26, 188, 156, 0.2)',
+            fill: true,
+            tension: 0.2
+          }]
+        },
+        options: {
+          scales: {
+            x: { display: true, title: { display: true, text: '' } },
+            y: { display: true, title: { display: true, text: '' } }
+          },
+          plugins: { tooltip: { enabled: true } }
+        }
+      });
+    });
+
+    document.getElementById('calculateBtn').addEventListener('click', calculateMutualInductance);
+    document.getElementById('plotBtn').addEventListener('click', () => {
+      plotSweepGraph();
+    });
+    document.getElementById('saveDataBtn').addEventListener('click', saveSweepData);
