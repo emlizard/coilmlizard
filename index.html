@@ -5,22 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mutual Inductance Calculator for Circular Coils</title>
     
-    <script>
-        window.MathJax = {
-            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
-            svg: { fontCache: 'global' }
-        };
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
-    
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     
     <link rel="stylesheet" href="style.css">
     <style>
+        /* 추가 스타일 */
         .mjx-chtml { color: var(--text-primary); }
-        #coilVis, .chart-container { min-height: 400px; position: relative; } /* 3D 뷰와 차트 높이 확보 */
+        #coilVis, .chart-container { 
+            min-height: 450px; 
+            position: relative; 
+            background: var(--surface); 
+            border-radius: var(--radius);
+            padding: 0.5rem;
+        }
         #coilVis canvas { border-radius: var(--radius); }
     </style>
 </head>
@@ -29,7 +29,6 @@
     <header class="header">
         <div class="header-content">
             <h1 class="page-title">Mutual Inductance Calculator</h1>
-            <button class="theme-toggle" id="theme-toggle-btn" aria-label="Toggle theme"></button>
         </div>
     </header>
 
@@ -38,7 +37,7 @@
         <section class="card animate-in">
             <h2 class="card-title"><span class="card-icon">⚙️</span>Coil Parameters & Position</h2>
             <div class="grid grid-3">
-                <div class="input-column">
+                <div>
                     <h3>Transmitter (Primary)</h3>
                     <div class="input-group">
                         <label for="rmaxTx" class="input-label">Max Radius <span class="input-unit">(cm)</span></label>
@@ -62,7 +61,7 @@
                     </div>
                 </div>
 
-                <div class="input-column">
+                <div>
                     <h3>Receiver (Secondary)</h3>
                     <div class="input-group">
                         <label for="rmaxRx" class="input-label">Max Radius <span class="input-unit">(cm)</span></label>
@@ -86,7 +85,7 @@
                     </div>
                 </div>
 
-                <div class="input-column">
+                <div>
                     <h3>Position & Orientation</h3>
                     <div class="input-group">
                         <label for="xOffset" class="input-label">Offset x <span class="input-unit">(cm)</span></label>
@@ -111,7 +110,7 @@
                 </div>
             </div>
             <button id="calculateBtn" class="btn btn-full">Calculate Mutual Inductance</button>
-            <div id="result" class="result-display" style="margin-top: 1.5rem; text-align: center;">
+            <div id="result" class="result-display" style="margin-top: 1.5rem; text-align: center; font-size: 1.25rem; font-weight: bold;">
                 </div>
         </section>
 
@@ -122,7 +121,7 @@
         
         <section class="card animate-in">
             <h2 class="card-title"><span class="card-icon">📈</span>Sweep & Graph</h2>
-            <div class="parameter-grid">
+            <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); align-items: end;">
                 <div class="input-group">
                     <label for="sweepVar" class="input-label">Sweep Variable</label>
                     <select id="sweepVar" class="input-field">
@@ -134,19 +133,19 @@
                     </select>
                 </div>
                 <div class="input-group">
-                    <label for="sweepMin" class="input-label">Min Value</label>
+                    <label for="sweepMin" class="input-label">Min</label>
                     <input type="number" id="sweepMin" value="0" step="0.1" class="input-field">
                 </div>
                 <div class="input-group">
-                    <label for="sweepMax" class="input-label">Max Value</label>
+                    <label for="sweepMax" class="input-label">Max</label>
                     <input type="number" id="sweepMax" value="20" step="0.1" class="input-field">
                 </div>
                 <div class="input-group">
-                    <label for="sweepStep" class="input-label">Step Size</label>
+                    <label for="sweepStep" class="input-label">Step</label>
                     <input type="number" id="sweepStep" value="1" step="0.1" class="input-field">
                 </div>
             </div>
-            <div class="parameter-grid">
+            <div class="grid grid-2">
                 <button id="plotBtn" class="btn">Plot Graph</button>
                 <button id="saveDataBtn" class="btn">Save Data</button>
             </div>
@@ -157,15 +156,8 @@
         </section>
 
         <section class="formula-section card animate-in">
-            <h2 class="card-title">Formulas Used</h2>
-            <div class="references info-box">
-                <h4>References</h4>
-                <p>1. S. Babic, F. Sirois, C. Akyel, C. Girardi, “Mutual Inductance Calculation Between Two Circular Loops Using 24-Point Gauss Quadrature,” IEEE Trans. Magn., 2010.<br>
-                2. M. Kacenak, “Romberg Integration Algorithm,” Technical University of Kosice, 2001.</p>
-            </div>
-            <div class="formula-content">
-                </div>
-        </section>
+             <h2 class="card-title">Formulas Used</h2>
+             </section>
 
     </main>
 
